@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente</title>
+    <link rel="stylesheet" href="/public/css/bootstrap.css">
+    <link rel="stylesheet" href="/public/css/Site.css">
+    <link rel="stylesheet" href="/public/css/toastr.css">
+    <script src="/public/js/jquery-4.0.0.js"></script>
+    <script src="/public/js/bootstrap.js"></script>   
+    <script src="/public/js/toastr.js"></script> 
+    <script src="/public/js/utiles.js"></script>
+    <script src="/public/js/cliente.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Aplicacion Web</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="/">Inicio</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/tipo">Tipo</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/producto">Producto</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" href="/cliente">Cliente</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+    </nav>
+      
+    <main class="container">
+        <h2>Cliente</h2>
+        <div class="row">
+            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+            <div class="col-lg-10 col-md-10 col-md-10">
+              <button id="btnAdicionar" style="float: right;" 
+                class="btn btn-outline-primary" title="Adicionar">Adicionar
+              </button>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+        </div>        
+        <div class="row">
+            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+            <div class="col-lg-10 col-md-10 col-sm-10">
+                <table id="tblCliente" class="table table-hover table-bordered">
+                    <colgroup>
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 15%">
+                        <col style="width: 15%">                        
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                      </colgroup>
+                    <thead>
+                      <tr>
+                        <th>Codigo</th>
+                        <th>CI</th>
+                        <th>Nombres</th>
+                        <th>Apellidos</th>
+                        <th>Direccion</th>
+                        <th>Telefono</th>
+                        <th>Correo</th>
+                        <th>Fec. Nac.</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>    
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+        </div>
+
+        <div class="modal fade" id="agregarCliente" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtCI">CI</label>
+                                <input id="txtCI" type="text" class="form-control" maxlength="15">                                    
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtNombres">Nombres</label>
+                                <input id="txtNombres" type="text" class="form-control" maxlength="250">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtApellidos">Apellidos</label>
+                                <input id="txtApellidos" type="text" class="form-control" maxlength="250">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtDireccion">Direccion</label>
+                                <input id="txtDireccion" type="text" class="form-control" maxlength="250">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtTelefono">Telefono</label>
+                                <input id="txtTelefono" type="text" class="form-control" maxlength="20">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtCorreo">Correo</label>
+                                <input id="txtCorreo" type="email" class="form-control" maxlength="50">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                            <div class="col-lg-10 col-md-10 col-sm-10">
+                                <label for="txtFecNac">Fec. Nac.</label>
+                                <input id="txtFecNac" type="date" class="form-control">
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" id="btnGuardar">Guardar</button>
+                        <button class="btn btn-primary" id="btnEditar">Guardar</button>
+                        <a id="btnCancelar" href="#" class="btn btn-link" 
+                           data-bs-dismiss="modal">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="eliminarCliente" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-mensaje-modal">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" id="btnConfirmarEliminar">Aceptar</button>
+                        <a id="btnCancelarEliminar" class="btn btn-link" href="#"
+                          data-bs-dismiss="modal">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+  
+    </main>    
+</body>
+</html>
