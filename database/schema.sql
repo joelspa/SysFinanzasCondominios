@@ -1,5 +1,9 @@
 -- database/schema.sql
 -- Sistema de Gestión de Finanzas para Condominios (un solo condominio)
+-- Ejecutar en la base de datos desaweb2: todas las tablas se crean en el esquema final
+
+CREATE SCHEMA IF NOT EXISTS final;
+SET search_path TO final;
 
 CREATE TABLE condominio (
     id_condominio INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -33,9 +37,10 @@ CREATE TABLE persona (
     correo     VARCHAR(120)
 );
 
--- Tabla intermedia: resuelve la relación N:M entre departamento y persona
-CREATE TABLE depdop (
-    id_depdop       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+-- Residentes: tabla intermedia que resuelve la relación N:M entre departamento y persona
+-- (propietarios, inquilinos, etc. de cada departamento)
+CREATE TABLE residente (
+    id_residente    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_departamento INT NOT NULL REFERENCES departamento(id_departamento),
     id_persona      INT NOT NULL REFERENCES persona(id_persona),
     tipo_relacion   VARCHAR(50) NOT NULL,          -- propietario, inquilino, etc.
@@ -133,3 +138,29 @@ INSERT INTO tipo_egreso (nombre, descripcion) VALUES
     ('Mantenimiento', 'Ascensor, piscina, bombas, jardín'),
     ('Reparaciones', 'Arreglos y daños'),
     ('Administrativos', 'Papelería, comisiones bancarias y otros');
+
+-- Datos de ejemplo para los CRUD de persona, departamento y residente
+INSERT INTO persona (nombre, telefono, correo) VALUES
+    ('Ana Pérez', '70000001', 'ana.perez@example.com'),
+    ('Luis Gómez', '70000002', 'luis.gomez@example.com'),
+    ('María Rojas', '70000003', 'maria.rojas@example.com');
+
+INSERT INTO departamento (id_condominio, numero, piso, estado, id_tipo_departamento, metros_cuadrados) VALUES
+    (1, 'A-101', 1, 'activo', 1, 55.00),
+    (1, 'A-201', 2, 'activo', 2, 80.50),
+    (1, 'B-301', 3, 'activo', 3, 95.00);
+
+INSERT INTO residente (id_departamento, id_persona, tipo_relacion, fecha_inicio) VALUES
+    (1, 1, 'propietario', '2025-01-15'),
+    (2, 2, 'propietario', '2024-06-01'),
+    (2, 3, 'inquilino', '2026-03-01');
+
+-- Usuario que registra los ingresos (la contraseña se definirá cuando se implemente el login)
+INSERT INTO usuario (nombre, correo, password_hash, rol) VALUES
+    ('Administrador', 'admin@condominio.com', 'pendiente-login', 'admin');
+
+-- Cargos de ejemplo: expensas de noviembre de cada departamento según la cuota de su tipo
+INSERT INTO cargo (id_departamento, concepto, periodo, monto, vencimiento)
+SELECT d.id_departamento, 'Expensas', '2026-11-01', t.cuota_mensual, '2026-11-10'
+FROM departamento d
+JOIN tipo_departamento t ON d.id_tipo_departamento = t.id_tipo_departamento;

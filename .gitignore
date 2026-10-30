@@ -1,10 +1,6 @@
 # Dependencias
 /node_modules/
 
-# JavaScript compilado de React
-/public/js/app.js
-/public/js/app.js.map
-
 # Variables de entorno
 .env*
 !.env.example
@@ -15,5 +11,7 @@ Thumbs.db
 *.pem
 npm-debug.log*
 
-# Cobertura
-/coverage/
+
+# Compilado de React
+/public/js/app.js
+/public/js/app.js.map

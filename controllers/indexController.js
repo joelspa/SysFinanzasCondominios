@@ -1,10 +1,7 @@
-const path = require('node:path');
+const path = require('path');
 
-function get(req, res) {
-    if (req.params.id && !/^[1-9]\d*$/.test(req.params.id)) {
-        return res.status(404).send('Página no encontrada');
+module.exports = {
+    get: (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../views/index.html'));
     }
-    res.sendFile(path.join(__dirname, '../views/index.html'));
 }
-
-module.exports = { get };
