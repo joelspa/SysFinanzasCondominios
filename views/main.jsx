@@ -19,10 +19,10 @@ const ruta = window.location.pathname.replace(/\/$/, '') || '/';
 const Pagina = paginas[ruta] || Inicio;
 
 createRoot(document.getElementById('root')).render(
-    <>
+    <div className="app">
         <Menu ruta={ruta} />
-        <main className="container pb-5">
+        <main className="app-principal">
             <Pagina />
         </main>
-    </>
+    </div>
 );

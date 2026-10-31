@@ -1,14 +1,16 @@
-// Color de la etiqueta según el estado del registro
-const colores = {
-    activo: 'text-bg-success',
-    registrado: 'text-bg-success',
-    pagado: 'text-bg-success',
-    pendiente: 'text-bg-warning',
-    vencido: 'text-bg-danger'
+import { capitalizar } from '../formato';
+
+// Tono de la etiqueta según el estado del registro
+const tonos = {
+    activo: 'bueno',
+    registrado: 'bueno',
+    pagado: 'bueno',
+    pendiente: 'aviso',
+    vencido: 'critico'
 };
 
-// Muestra el estado (activo, registrado, pendiente, etc.) como una etiqueta de color
+// Muestra el estado (activo, registrado, pendiente, etc.) como una etiqueta con un punto de color
 export default function Estado({ valor }) {
-    let color = colores[valor] || 'text-bg-secondary';
-    return <span className={'badge ' + color}>{valor}</span>;
+    let tono = tonos[valor] || 'neutro';
+    return <span className={'estado estado-' + tono}>{capitalizar(valor)}</span>;
 }

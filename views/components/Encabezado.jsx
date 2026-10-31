@@ -1,12 +1,18 @@
-// Título de la página con el botón Adicionar
-export default function Encabezado({ titulo, descripcion, onAdicionar }) {
+import Icono from './Icono';
+
+// Título de la página con el botón para adicionar un registro
+export default function Encabezado({ titulo, descripcion, textoBoton = 'Adicionar', onAdicionar }) {
     return (
-        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div className="encabezado">
             <div>
-                <h2 className="mb-0">{titulo}</h2>
-                <p className="text-muted mb-0">{descripcion}</p>
+                <h1>{titulo}</h1>
+                <p>{descripcion}</p>
             </div>
-            <button className="btn btn-primary" onClick={onAdicionar}>+ Adicionar</button>
+            {onAdicionar && (
+                <button className="btn btn-primary" onClick={onAdicionar}>
+                    <Icono nombre="mas" tamano={16} /> {textoBoton}
+                </button>
+            )}
         </div>
     );
 }
