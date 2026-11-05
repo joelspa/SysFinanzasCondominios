@@ -1,50 +1,25 @@
 const residenteModel = require('../models/residenteModel');
-const mensajeError = require('./mensajeError');
+const { responder, leerCampos } = require('./respuesta');
 const objResidenteModel = new residenteModel();
+
+const CAMPOS = ['id_departamento', 'id_persona', 'tipo_relacion', 'fecha_inicio', 'fecha_fin', 'estado'];
 
 module.exports = {
     obtenerResidentes: (req, res) => {
-        objResidenteModel.ObtenerResidentes().then(function (data) {
-            res.type('json');
-            res.send({ "Success": true, "Data": data });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objResidenteModel.ObtenerResidentes());
     },
     guardarResidente: (req, res) => {
-        var data = {
-            id_residente: req.body.id_residente, id_departamento: req.body.id_departamento || null,
-            id_persona: req.body.id_persona || null, tipo_relacion: req.body.tipo_relacion || null,
-            fecha_inicio: req.body.fecha_inicio || null, fecha_fin: req.body.fecha_fin || null,
-            estado: req.body.estado || null
+        let data = {
+            id_residente: req.body.id_residente, ...leerCampos(req.body, CAMPOS),
+            confirmar_copropiedad: req.body.confirmar_copropiedad === true
         };
         if (data.id_residente == 0) {
-            objResidenteModel.GuardarResidente(data).then(data => {
-                res.type('json');
-                res.send({ "Success": true, "Data": data.id_residente });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objResidenteModel.GuardarResidente(data).then((nuevo) => nuevo.id_residente));
         } else {
-            objResidenteModel.ActualizarResidente(data).then(function () {
-                res.type('json');
-                res.send({ "Success": true });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objResidenteModel.ActualizarResidente(data));
         }
     },
     eliminarResidente: (req, res) => {
-        var data = { id_residente: req.body.id_residente };
-        objResidenteModel.EliminarResidente(data).then(function () {
-            res.type('json');
-            res.send({ "Success": true });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objResidenteModel.EliminarResidente({ id_residente: req.body.id_residente }));
     }
 }

@@ -1,48 +1,22 @@
 const personaModel = require('../models/personaModel');
-const mensajeError = require('./mensajeError');
+const { responder, leerCampos } = require('./respuesta');
 const objPersonaModel = new personaModel();
+
+const CAMPOS = ['nombre', 'telefono', 'correo'];
 
 module.exports = {
     obtenerPersonas: (req, res) => {
-        objPersonaModel.ObtenerPersonas().then(function (data) {
-            res.type('json');
-            res.send({ "Success": true, "Data": data });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objPersonaModel.ObtenerPersonas());
     },
     guardarPersona: (req, res) => {
-        var data = {
-            id_persona: req.body.id_persona, nombre: req.body.nombre || null,
-            telefono: req.body.telefono || null, correo: req.body.correo || null
-        };
+        let data = { id_persona: req.body.id_persona, ...leerCampos(req.body, CAMPOS) };
         if (data.id_persona == 0) {
-            objPersonaModel.GuardarPersona(data).then(data => {
-                res.type('json');
-                res.send({ "Success": true, "Data": data.id_persona });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objPersonaModel.GuardarPersona(data).then((nuevo) => nuevo.id_persona));
         } else {
-            objPersonaModel.ActualizarPersona(data).then(function () {
-                res.type('json');
-                res.send({ "Success": true });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objPersonaModel.ActualizarPersona(data));
         }
     },
     eliminarPersona: (req, res) => {
-        var data = { id_persona: req.body.id_persona };
-        objPersonaModel.EliminarPersona(data).then(function () {
-            res.type('json');
-            res.send({ "Success": true });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objPersonaModel.EliminarPersona({ id_persona: req.body.id_persona }));
     }
 }

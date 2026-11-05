@@ -1,51 +1,36 @@
 const ingresoModel = require('../models/ingresoModel');
-const mensajeError = require('./mensajeError');
+const { responder, rechazar, leerCampos } = require('./respuesta');
+const { MAX_MESES_ADELANTO } = require('../models/config');
 const objIngresoModel = new ingresoModel();
+
+const CAMPOS = ['id_departamento', 'id_tipo_ingreso', 'concepto', 'monto', 'fecha', 'metodo_pago', 'aplica_deuda'];
 
 module.exports = {
     obtenerIngresos: (req, res) => {
-        objIngresoModel.ObtenerIngresos().then(function (data) {
-            res.type('json');
-            res.send({ "Success": true, "Data": data });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objIngresoModel.ObtenerIngresos());
+    },
+    obtenerComprobante: (req, res) => {
+        responder(res, objIngresoModel.ObtenerComprobante(req.query.id_ingreso));
     },
     guardarIngreso: (req, res) => {
-        var data = {
-            id_ingreso: req.body.id_ingreso, id_departamento: req.body.id_departamento || null,
-            id_tipo_ingreso: req.body.id_tipo_ingreso || null, id_cargo: req.body.id_cargo || null,
-            concepto: req.body.concepto || null, monto: req.body.monto || null,
-            fecha: req.body.fecha || null, metodo_pago: req.body.metodo_pago || null,
-            estado: req.body.estado || null
-        };
-        if (data.id_ingreso == 0) {
-            objIngresoModel.GuardarIngreso(data).then(data => {
-                res.type('json');
-                res.send({ "Success": true, "Data": data.id_ingreso });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
-        } else {
-            objIngresoModel.ActualizarIngreso(data).then(function () {
-                res.type('json');
-                res.send({ "Success": true });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+        let data = { id_ingreso: req.body.id_ingreso, ...leerCampos(req.body, CAMPOS) };
+        if (data.id_ingreso != 0) {
+            return responder(res, objIngresoModel.ActualizarIngreso(data));
         }
+        let meses = Number(req.body.meses_adelantados || 0);
+        if (!Number.isInteger(meses) || meses < 0 || meses > MAX_MESES_ADELANTO) {
+            return rechazar(res, 'Los meses adelantados deben estar entre 0 y ' + MAX_MESES_ADELANTO);
+        }
+        if (meses > 0 && !data.aplica_deuda) {
+            return rechazar(res, 'Para adelantar meses el pago debe aplicarse a la deuda del departamento');
+        }
+        responder(res, objIngresoModel.GuardarIngreso({ ...data, meses_adelantados: meses }).then((nuevo) => nuevo.id_ingreso));
     },
-    eliminarIngreso: (req, res) => {
-        var data = { id_ingreso: req.body.id_ingreso };
-        objIngresoModel.EliminarIngreso(data).then(function () {
-            res.type('json');
-            res.send({ "Success": true });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+    anularIngreso: (req, res) => {
+        let motivo = String(req.body.motivo || '').trim();
+        if (motivo === '') {
+            return rechazar(res, 'Indique el motivo de la anulación');
+        }
+        responder(res, objIngresoModel.AnularIngreso({ id_ingreso: req.body.id_ingreso, motivo }));
     }
 }

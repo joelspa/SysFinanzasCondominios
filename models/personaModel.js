@@ -1,11 +1,20 @@
 const dao = require('./dao');
 const objDao = new dao();
 
+// Dónde aparece cada persona en el historial del condominio (residencias, traspasos y cargos a su nombre)
+const SQL_HISTORIAL = '(SELECT COUNT(*) FROM residente r WHERE r.id_persona = p.id_persona)::int AS residencias, '
+    + '(SELECT COUNT(*) FROM traspaso tr WHERE p.id_persona IN (tr.id_propietario_anterior, tr.id_propietario_nuevo))::int AS traspasos, '
+    + '(SELECT COUNT(*) FROM cargo c WHERE c.id_responsable = p.id_persona)::int AS cargos';
+
 class personaModel {
     constructor() { }
 
+    // Devuelve las personas con los departamentos donde viven hoy y si tienen historial
     ObtenerPersonas() {
-        let sql = 'SELECT * FROM persona ORDER BY id_persona';
+        let sql = 'SELECT p.*, ' + SQL_HISTORIAL + ', '
+            + "(SELECT STRING_AGG(d.numero, ', ' ORDER BY d.numero) FROM residente r JOIN departamento d ON d.id_departamento = r.id_departamento "
+            + "WHERE r.id_persona = p.id_persona AND r.estado = 'activo') AS departamentos "
+            + 'FROM persona p ORDER BY p.id_persona';
         return objDao.consultar(sql);
     }
 
@@ -21,10 +30,14 @@ class personaModel {
         return objDao.ejecutar(sql, params);
     }
 
-    EliminarPersona(data) {
+    // Una persona con historial no se elimina: se perdería quién vivió, quién fue dueño y quién debía
+    async EliminarPersona(data) {
+        let uso = await objDao.obtenerUno('SELECT ' + SQL_HISTORIAL + ' FROM persona p WHERE p.id_persona = $1', [data.id_persona]);
+        if (uso && (uso.residencias > 0 || uso.traspasos > 0 || uso.cargos > 0)) {
+            throw new Error('No se puede eliminar: la persona tiene historial en el condominio (residencias, traspasos o cargos a su nombre)');
+        }
         let sql = 'DELETE FROM persona WHERE id_persona = $1';
-        let params = [data.id_persona];
-        return objDao.ejecutar(sql, params);
+        return objDao.ejecutar(sql, [data.id_persona]);
     }
 }
 

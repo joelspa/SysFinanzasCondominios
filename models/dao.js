@@ -7,6 +7,11 @@ class dao {
         let data = await db.any(sql, params);
         return data;
     }
+    // Devuelve un solo registro o null si no existe
+    async obtenerUno(sql, params = []) {
+        let data = await db.oneOrNone(sql, params);
+        return data;
+    }
     async insertar(sql, params = []) {
         let data = await db.one(sql, params);
         return data;

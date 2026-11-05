@@ -1144,3 +1144,782 @@ li.anulado {
         font-size: 1.15rem;
     }
 }
+
+.sin-datos span.spinner-border {
+    display: inline-block;
+}
+
+/* ===== Fase 1: componentes de cuentas, pagos y traspasos ===== */
+.btn-outline-primary {
+    --bs-btn-color: var(--brand);
+    --bs-btn-border-color: #b9cdf0;
+    --bs-btn-hover-bg: var(--brand-suave);
+    --bs-btn-hover-color: var(--brand-oscuro);
+    --bs-btn-hover-border-color: var(--brand);
+    --bs-btn-active-bg: #dbe7fa;
+    --bs-btn-active-color: var(--brand-oscuro);
+    --bs-btn-active-border-color: var(--brand);
+    background: var(--superficie);
+}
+
+.encabezado-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.texto-deuda {
+    color: #b42318;
+}
+
+.form-text {
+    font-size: 0.78rem;
+    color: var(--texto-3);
+}
+
+.barra-ruta a {
+    color: var(--texto-3);
+    text-decoration: none;
+}
+
+.barra-ruta a:hover {
+    color: var(--brand);
+}
+
+/* Etiqueta de estado informativa (parcial, ocupado) */
+.estado-info {
+    background: #e8f1fc;
+    color: #1e3a8a;
+}
+
+.estado-info::before {
+    background: var(--serie);
+}
+
+/* Resumen con detalle y tono */
+.resumen-detalle {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    color: var(--texto-3);
+}
+
+.resumen-item.tono-critico {
+    box-shadow: inset 3px 0 0 var(--critico);
+}
+
+.resumen-item.tono-critico .resumen-valor {
+    color: #b42318;
+}
+
+.resumen-item.tono-aviso {
+    box-shadow: inset 3px 0 0 var(--aviso);
+}
+
+.resumen-item.tono-bueno {
+    box-shadow: inset 3px 0 0 var(--bueno);
+}
+
+/* Pestañas */
+.pestanas {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--borde);
+    overflow-x: auto;
+}
+
+.pestana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    color: var(--texto-3);
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.pestana:hover {
+    color: var(--texto);
+}
+
+.pestana.activa {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+}
+
+.pestana-contador {
+    min-width: 22px;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: var(--texto-2);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.pestana.activa .pestana-contador {
+    background: var(--brand-suave);
+    color: var(--brand);
+}
+
+/* Notas dentro de páginas y formularios */
+.nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.6rem;
+    font-size: 0.875rem;
+    background: #eef4fd;
+    color: #1e3a8a;
+}
+
+.nota-icono {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.nota-aviso {
+    background: #fef6e3;
+    color: #713f12;
+}
+
+.nota-critico {
+    background: #fbeaea;
+    color: #7f1d1d;
+}
+
+.nota-bueno {
+    background: #e8f6e8;
+    color: #14532d;
+}
+
+/* Interruptor */
+.casilla {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding-left: 0;
+    margin: 0.5rem 0 0;
+}
+
+.casilla .form-check-input {
+    float: none;
+    flex-shrink: 0;
+    margin: 0.15rem 0 0 !important;
+}
+
+.casilla .form-check-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Barra de progreso de pagos */
+.columna-progreso {
+    min-width: 140px;
+}
+
+.progreso {
+    height: 6px;
+    margin: 0.2rem 0 0.25rem;
+    background: #eef1f5;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progreso span {
+    display: block;
+    height: 100%;
+    background: var(--serie);
+    border-radius: 999px;
+}
+
+.progreso.completo span {
+    background: var(--bueno);
+}
+
+/* Formulario de pago */
+.contador {
+    display: flex;
+}
+
+.contador .btn {
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+.contador .btn:last-child {
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.contador .form-control {
+    border-radius: 0;
+    margin: 0 -1px;
+}
+
+.monto-entrada {
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.atajos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--texto-3);
+}
+
+.cuenta-resumen {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: 0.75rem;
+    background: var(--superficie-2);
+}
+
+.cuenta-resumen h6,
+.vista-previa h6 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--texto-3);
+    margin-bottom: 0.6rem;
+}
+
+.cuenta-resumen dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.cuenta-resumen dt {
+    font-weight: 400;
+    color: var(--texto-2);
+}
+
+.cuenta-resumen dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.vista-previa ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.vista-previa li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--borde-suave);
+    font-size: 0.875rem;
+}
+
+.vista-previa li.sin-cubrir {
+    color: var(--texto-3);
+}
+
+.vista-previa-total {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid var(--borde);
+}
+
+.vista-previa-total div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.15rem 0;
+    font-size: 0.9rem;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.chip {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    margin-left: 0.4rem;
+    border-radius: 999px;
+    background: var(--brand-suave);
+    color: var(--brand-oscuro);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chips .chip {
+    margin-left: 0;
+}
+
+.chip-mas {
+    background: #eef2f7;
+    color: var(--texto-2);
+}
+
+/* Enlaces */
+a.enlace-etiqueta {
+    text-decoration: none;
+}
+
+a.enlace-etiqueta:hover {
+    background: var(--brand-suave);
+    color: var(--brand);
+}
+
+.volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--texto-3);
+    text-decoration: none;
+}
+
+.volver:hover {
+    color: var(--brand);
+}
+
+/* Ficha del departamento */
+.ficha-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.ficha-cabecera h1 {
+    font-size: 1.4rem;
+    font-weight: 650;
+    margin: 0;
+}
+
+.ficha-cabecera p {
+    margin: 0.3rem 0 0;
+    color: var(--texto-3);
+    font-size: 0.9rem;
+}
+
+.ficha-numero {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--brand-suave);
+    color: var(--brand);
+    flex-shrink: 0;
+}
+
+.linea-tiempo {
+    list-style: none;
+    margin: 0;
+    padding: 1.25rem 1.25rem 0.5rem 2.25rem;
+    position: relative;
+}
+
+.linea-tiempo::before {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    top: 1.5rem;
+    bottom: 1.5rem;
+    width: 2px;
+    background: var(--borde);
+}
+
+.linea-tiempo li {
+    position: relative;
+    padding: 0 0 1.25rem 1rem;
+    font-size: 0.9rem;
+}
+
+.linea-tiempo li::before {
+    content: "";
+    position: absolute;
+    left: -0.95rem;
+    top: 0.3rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--brand);
+    box-shadow: 0 0 0 3px var(--superficie);
+}
+
+.linea-tiempo-fecha {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--texto-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Traspaso */
+.traspaso-flujo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: 0.75rem;
+    background: var(--superficie-2);
+}
+
+.traspaso-flujo strong {
+    display: block;
+    padding: 0.45rem 0;
+}
+
+.traspaso-flecha {
+    padding-bottom: 0.45rem;
+    font-size: 1.25rem;
+    color: var(--texto-3);
+}
+
+/* Comprobante */
+.comprobante-acciones {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 760px;
+    margin: 0 auto 1rem;
+}
+
+.comprobante {
+    position: relative;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem;
+    overflow: hidden;
+}
+
+.comprobante-cabecera {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--texto);
+}
+
+.comprobante-numero {
+    display: block;
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.comprobante-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.comprobante-datos dt {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--texto-3);
+}
+
+.comprobante-datos dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.comprobante-concepto {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--superficie-2);
+}
+
+.comprobante-concepto .secundario {
+    margin-bottom: 0.15rem;
+}
+
+.comprobante-tabla {
+    border: 1px solid var(--borde);
+}
+
+.comprobante-totales {
+    margin-left: auto;
+    max-width: 320px;
+}
+
+.comprobante-totales div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+}
+
+.comprobante-totales .comprobante-total {
+    margin-top: 0.25rem;
+    padding-top: 0.6rem;
+    border-top: 2px solid var(--texto);
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.comprobante-pie {
+    margin: 1.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--texto-3);
+}
+
+.comprobante-firmas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 4rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--texto-3);
+}
+
+.comprobante-firmas div {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--eje);
+}
+
+.sello-anulado {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-18deg);
+    padding: 0.5rem 2rem;
+    border: 4px solid var(--critico);
+    border-radius: 0.5rem;
+    color: var(--critico);
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+/* Impresión: solo el contenido, sin menú ni botones */
+@media print {
+    .menu-lateral,
+    .menu-fondo,
+    .barra-superior,
+    .aviso-flotante,
+    .no-imprimir,
+    .boton-icono {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .app {
+        padding-left: 0;
+    }
+
+    .app-principal {
+        padding: 0;
+        max-width: none;
+    }
+
+    .panel,
+    .resumen-item {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .comprobante {
+        border: 0;
+        padding: 0;
+    }
+}
+
+/* Valor fijo que no se edita (ej. propietario sin fecha de salida) */
+.campo-fijo {
+    padding: 0.375rem 0.75rem;
+    border: 1px dashed #d6dae2;
+    border-radius: 0.5rem;
+    background: var(--superficie-2);
+    color: var(--texto-2);
+}
+
+/* ===== Fase 2: gastos y gráfico de ingresos contra gastos ===== */
+:root {
+    --serie-2: #eb6834;   /* gastos (segundo color de la paleta validada) */
+}
+
+.gc-grupo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.gc-grupo.varias .gc-barra {
+    width: min(18px, 38%);
+}
+
+.gc-barra.serie-2,
+.gc-muestra.serie-2,
+.bh-pista span.serie-2 {
+    background: var(--serie-2);
+}
+
+.gc-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    font-size: 0.82rem;
+    color: var(--texto-2);
+}
+
+.gc-leyenda li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.gc-muestra {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--serie);
+    flex-shrink: 0;
+}
+
+.gc-tooltip-fila {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.etiqueta-gasto {
+    background: #fdeee6;
+    color: #8a3a14;
+}
+
+.panel-pie-doble {
+    display: flex;
+    margin-top: auto;
+    border-top: 1px solid var(--borde);
+}
+
+.panel-pie-doble a {
+    flex: 1;
+    padding: 0.8rem;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.panel-pie-doble a + a {
+    border-left: 1px solid var(--borde);
+}
+
+.panel-pie-doble a:hover {
+    background: var(--superficie-2);
+}
+
+/* ===== Fase 3: configuración ===== */
+.seccion-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.seccion-cabecera h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.seccion-cabecera p {
+    margin: 0.2rem 0 0;
+    font-size: 0.875rem;
+    color: var(--texto-3);
+}
+
+.panel-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid var(--borde);
+    background: var(--superficie-2);
+    border-radius: 0 0 0.875rem 0.875rem;
+}
+
+.membrete {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-bottom: 2px solid var(--texto);
+    border-radius: 0.5rem;
+}
+
+.membrete .secundario:empty {
+    display: none;
+}
+
+.menu-marca strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 170px;
+}
+
+/* ===== Usuarios ===== */
+.entrada-contrasena {
+    position: relative;
+}
+
+.entrada-contrasena .form-control {
+    padding-right: 2.75rem;
+}
+
+.entrada-contrasena .boton-icono {
+    position: absolute;
+    top: 50%;
+    right: 0.3rem;
+    transform: translateY(-50%);
+}

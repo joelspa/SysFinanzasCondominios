@@ -1,81 +1,104 @@
 const dao = require('./dao');
+const { reaplicar } = require('./aplicarPagos');
+const { adelantarExpensas } = require('./expensas');
+const { ID_CONDOMINIO, ID_USUARIO, CONCEPTO_EXPENSAS } = require('./config');
 const objDao = new dao();
 
-// Usuario que registra el ingreso: por ahora fijo, después vendrá del login
-const ID_USUARIO = 1;
+// Cargos que cubre cada pago, como lista JSON: [{ id_cargo, concepto, periodo, monto, total }]
+const SQL_APLICACIONES = "(SELECT JSON_AGG(JSON_BUILD_OBJECT('id_cargo', c.id_cargo, 'concepto', c.concepto, "
+    + "'periodo', TO_CHAR(c.periodo, 'YYYY-MM'), 'monto', ic.monto, 'total', c.monto) ORDER BY c.periodo, c.id_cargo) "
+    + 'FROM ingreso_cargo ic JOIN cargo c ON c.id_cargo = ic.id_cargo WHERE ic.id_ingreso = i.id_ingreso) AS aplicaciones';
 
-// Recalcula el estado de los cargos indicados: pagado si tiene un ingreso registrado,
-// vencido si ya pasó la fecha de vencimiento y pendiente en otro caso
-const SQL_ESTADO_CARGO = 'UPDATE cargo SET estado = CASE '
-    + "WHEN EXISTS (SELECT 1 FROM ingreso i WHERE i.id_cargo = cargo.id_cargo AND i.estado = 'registrado') THEN 'pagado' "
-    + "WHEN vencimiento < CURRENT_DATE THEN 'vencido' ELSE 'pendiente' END "
-    + 'WHERE id_cargo = ANY($1::int[])';
-
-async function actualizarCargos(t, cargos) {
-    let ids = cargos.filter(id => id != null);
-    if (ids.length > 0) {
-        await t.none(SQL_ESTADO_CARGO, [ids]);
-    }
-}
+const SQL_INGRESOS = 'SELECT i.id_ingreso, i.id_departamento, i.id_tipo_ingreso, i.concepto, i.monto, i.aplicado, i.a_favor, '
+    + "TO_CHAR(i.fecha, 'YYYY-MM-DD') AS fecha, i.metodo_pago, i.estado, i.aplica_deuda, i.motivo_anulacion, "
+    + 'd.numero AS departamento, t.nombre AS tipo_ingreso, ' + SQL_APLICACIONES + ' FROM v_ingreso i '
+    + 'JOIN departamento d ON d.id_departamento = i.id_departamento '
+    + 'JOIN tipo_ingreso t ON t.id_tipo_ingreso = i.id_tipo_ingreso ';
 
 class ingresoModel {
     constructor() { }
 
-    // Devuelve los ingresos y los departamentos, tipos y cargos para llenar los combos
+    // Devuelve los ingresos, los departamentos con su cuenta, los tipos y los cargos con saldo
+    // (para mostrar en el formulario cómo se aplicará el pago)
     ObtenerIngresos() {
-        let sqlIngresos = 'SELECT i.id_ingreso, i.id_departamento, i.id_tipo_ingreso, i.id_cargo, i.concepto, i.monto, '
-            + "TO_CHAR(i.fecha, 'YYYY-MM-DD') AS fecha, i.metodo_pago, i.estado, "
-            + 'd.numero AS departamento, t.nombre AS tipo_ingreso FROM ingreso i '
-            + 'JOIN departamento d ON i.id_departamento = d.id_departamento '
-            + 'JOIN tipo_ingreso t ON i.id_tipo_ingreso = t.id_tipo_ingreso '
-            + 'ORDER BY i.fecha DESC, i.id_ingreso DESC';
-        let sqlDepartamentos = 'SELECT id_departamento, numero FROM departamento ORDER BY numero';
+        let sqlDepartamentos = 'SELECT v.id_departamento, v.numero, v.estado, v.cuota_mensual, v.propietario, v.deuda, v.saldo_favor, '
+            + "(SELECT TO_CHAR(MAX(c.periodo), 'YYYY-MM') FROM cargo c WHERE c.id_departamento = v.id_departamento "
+            + 'AND c.concepto = $2) AS ultima_expensa FROM v_departamento v WHERE v.id_condominio = $1 ORDER BY v.numero';
         let sqlTipos = 'SELECT id_tipo_ingreso, nombre FROM tipo_ingreso ORDER BY id_tipo_ingreso';
-        let sqlCargos = "SELECT id_cargo, id_departamento, concepto, TO_CHAR(periodo, 'YYYY-MM') AS periodo, monto, estado "
-            + 'FROM cargo ORDER BY periodo, id_cargo';
+        let sqlPendientes = "SELECT id_cargo, id_departamento, concepto, TO_CHAR(periodo, 'YYYY-MM') AS periodo, monto, saldo, estado "
+            + 'FROM v_cargo WHERE saldo > 0 ORDER BY periodo, vencimiento, id_cargo';
         return Promise.all([
-            objDao.consultar(sqlIngresos),
-            objDao.consultar(sqlDepartamentos),
+            objDao.consultar(SQL_INGRESOS + 'ORDER BY i.fecha DESC, i.id_ingreso DESC'),
+            objDao.consultar(sqlDepartamentos, [ID_CONDOMINIO, CONCEPTO_EXPENSAS]),
             objDao.consultar(sqlTipos),
-            objDao.consultar(sqlCargos)
+            objDao.consultar(sqlPendientes)
         ]).then(function (data) {
-            return { Ingresos: data[0], Departamentos: data[1], Tipos: data[2], Cargos: data[3] };
+            return { Ingresos: data[0], Departamentos: data[1], Tipos: data[2], Pendientes: data[3] };
         });
     }
 
-    // Transacción: registra el ingreso y marca como pagado el cargo que cancela
+    // Datos para imprimir el comprobante de un pago
+    async ObtenerComprobante(idIngreso) {
+        let sqlExtra = 'SELECT u.nombre AS usuario, v.propietario, v.deuda, v.saldo_favor FROM ingreso i '
+            + 'JOIN usuario u ON u.id_usuario = i.id_usuario '
+            + 'JOIN v_departamento v ON v.id_departamento = i.id_departamento WHERE i.id_ingreso = $1';
+        let [ingreso, extra, condominio] = await Promise.all([
+            objDao.obtenerUno(SQL_INGRESOS + 'WHERE i.id_ingreso = $1', [idIngreso]),
+            objDao.obtenerUno(sqlExtra, [idIngreso]),
+            objDao.obtenerUno('SELECT nombre, direccion, nit, telefono, correo FROM condominio WHERE id_condominio = $1', [ID_CONDOMINIO])
+        ]);
+        if (!ingreso) {
+            throw new Error('El pago no existe');
+        }
+        return { Ingreso: { ...ingreso, ...extra }, Condominio: condominio };
+    }
+
+    // Transacción: registra el pago, emite las expensas adelantadas que pidió y reparte el dinero
     GuardarIngreso(data) {
-        let sql = 'INSERT INTO ingreso (id_departamento, id_tipo_ingreso, id_cargo, id_usuario, concepto, monto, fecha, metodo_pago, estado) '
-            + 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id_ingreso';
-        let params = [data.id_departamento, data.id_tipo_ingreso, data.id_cargo, ID_USUARIO,
-            data.concepto, data.monto, data.fecha, data.metodo_pago, data.estado];
+        let sql = 'INSERT INTO ingreso (id_departamento, id_tipo_ingreso, id_usuario, concepto, monto, fecha, metodo_pago, aplica_deuda) '
+            + 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id_ingreso';
+        let params = [data.id_departamento, data.id_tipo_ingreso, ID_USUARIO, data.concepto,
+            data.monto, data.fecha, data.metodo_pago, data.aplica_deuda];
         return objDao.transaccion(async function (t) {
             let nuevo = await t.one(sql, params);
-            await actualizarCargos(t, [data.id_cargo]);
+            if (data.meses_adelantados > 0) {
+                await adelantarExpensas(t, data.id_departamento, data.meses_adelantados);
+            }
+            await reaplicar(t, data.id_departamento);
             return nuevo;
         });
     }
 
-    // Transacción: actualiza el ingreso y recalcula el cargo anterior y el nuevo
+    // Transacción: actualiza el pago y recalcula las aplicaciones del departamento anterior y del nuevo
     ActualizarIngreso(data) {
-        let sqlAnterior = 'SELECT id_cargo FROM ingreso WHERE id_ingreso = $1';
-        let sql = 'UPDATE ingreso SET id_departamento = $1, id_tipo_ingreso = $2, id_cargo = $3, concepto = $4, '
-            + 'monto = $5, fecha = $6, metodo_pago = $7, estado = $8 WHERE id_ingreso = $9';
-        let params = [data.id_departamento, data.id_tipo_ingreso, data.id_cargo, data.concepto,
-            data.monto, data.fecha, data.metodo_pago, data.estado, data.id_ingreso];
+        let sql = 'UPDATE ingreso SET id_departamento = $1, id_tipo_ingreso = $2, concepto = $3, monto = $4, '
+            + 'fecha = $5, metodo_pago = $6, aplica_deuda = $7 WHERE id_ingreso = $8';
+        let params = [data.id_departamento, data.id_tipo_ingreso, data.concepto, data.monto,
+            data.fecha, data.metodo_pago, data.aplica_deuda, data.id_ingreso];
         return objDao.transaccion(async function (t) {
-            let anterior = await t.oneOrNone(sqlAnterior, [data.id_ingreso]);
+            let anterior = await t.oneOrNone("SELECT id_departamento FROM ingreso WHERE id_ingreso = $1 AND estado = 'registrado'",
+                [data.id_ingreso]);
+            if (!anterior) {
+                throw new Error('Solo se pueden editar pagos registrados (no anulados)');
+            }
             await t.none(sql, params);
-            await actualizarCargos(t, [anterior && anterior.id_cargo, data.id_cargo]);
+            await reaplicar(t, anterior.id_departamento);
+            if (anterior.id_departamento != data.id_departamento) {
+                await reaplicar(t, data.id_departamento);
+            }
         });
     }
 
-    // Transacción: elimina el ingreso y devuelve su cargo a pendiente
-    EliminarIngreso(data) {
-        let sql = 'DELETE FROM ingreso WHERE id_ingreso = $1 RETURNING id_cargo';
+    // Los pagos no se eliminan, se anulan: quedan en el historial y la deuda vuelve a los cargos
+    AnularIngreso(data) {
+        let sql = "UPDATE ingreso SET estado = 'anulado', motivo_anulacion = $2 "
+            + "WHERE id_ingreso = $1 AND estado = 'registrado' RETURNING id_departamento";
         return objDao.transaccion(async function (t) {
-            let eliminado = await t.oneOrNone(sql, [data.id_ingreso]);
-            await actualizarCargos(t, [eliminado && eliminado.id_cargo]);
+            let ingreso = await t.oneOrNone(sql, [data.id_ingreso, data.motivo]);
+            if (!ingreso) {
+                throw new Error('El pago no existe o ya estaba anulado');
+            }
+            await reaplicar(t, ingreso.id_departamento);
         });
     }
 }
