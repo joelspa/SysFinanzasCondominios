@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../config/db');
 
 // Acceso a datos: todos los modelos ejecutan sus consultas a través de esta clase
 class dao {

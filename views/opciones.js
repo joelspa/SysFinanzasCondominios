@@ -37,10 +37,12 @@ export const METODOS_PAGO = [
     { valor: 'tarjeta', texto: 'Tarjeta' }
 ];
 
-// Sugerencias para el concepto de un cargo manual
-export const CONCEPTOS_CARGO = ['Expensas', 'Multa', 'Cuota extraordinaria', 'Reparación', 'Consumo de agua'];
+export const CONCEPTO_EXPENSAS = 'Expensas';  // igual que config/config.js
 
-export const MAX_MESES_ADELANTO = 24;  // igual que models/config.js
+// Sugerencias para el concepto de un cargo manual
+export const CONCEPTOS_CARGO = [CONCEPTO_EXPENSAS, 'Multa', 'Cuota extraordinaria', 'Reparación', 'Consumo de agua'];
+
+export const MAX_MESES_ADELANTO = 24;  // igual que config/config.js
 
 // Roles de usuario (CHECK de la tabla usuario)
 export const ROLES = [
@@ -48,4 +50,4 @@ export const ROLES = [
     { valor: 'tesorero', texto: 'Tesorero', descripcion: 'Registra pagos, gastos y cargos.' }
 ];
 
-export const LARGO_MINIMO_CONTRASENA = 8;   // igual que models/contrasena.js
+export const LARGO_MINIMO_CONTRASENA = 8;   // igual que utils/contrasena.js

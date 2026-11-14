@@ -1,5 +1,5 @@
 const cargoModel = require('../models/cargoModel');
-const { responder, rechazar, leerCampos, PERIODO } = require('./respuesta');
+const { responder, rechazar, leerCampos, PERIODO, esDiaVencimiento } = require('./respuesta');
 const objCargoModel = new cargoModel();
 
 const CAMPOS = ['id_departamento', 'concepto', 'periodo', 'monto', 'vencimiento'];
@@ -28,9 +28,9 @@ module.exports = {
         if (!PERIODO.test(periodo || '')) {
             return rechazar(res, 'Seleccione el mes de las expensas');
         }
-        if (!Number.isInteger(dia) || dia < 1 || dia > 28) {
+        if (!esDiaVencimiento(dia)) {
             return rechazar(res, 'El día de vencimiento debe estar entre 1 y 28');
         }
         responder(res, objCargoModel.GenerarExpensas({ periodo, dia_vencimiento: dia }));
     }
-}
+};

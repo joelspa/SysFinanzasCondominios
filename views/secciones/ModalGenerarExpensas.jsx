@@ -2,17 +2,18 @@ import { useState } from 'react';
 import Modal from '../components/Modal';
 import Campo from '../components/Campo';
 import Nota from '../components/Nota';
-import { dinero, hoy, mesLargo } from '../formato';
+import { dinero, mesActual, mesLargo } from '../formato';
+import { CONCEPTO_EXPENSAS } from '../opciones';
 
 // Emite la expensa del mes a todos los departamentos activos (no duplica las que ya existen).
 //   diaVencimiento: día configurado en el condominio (se puede cambiar solo para esta emisión)
 //   onConfirmar(periodo, dia) devuelve un mensaje de error o null si salió bien
 export default function ModalGenerarExpensas({ departamentos, cargos, diaVencimiento, onCerrar, onConfirmar }) {
-    const [periodo, setPeriodo] = useState(hoy().slice(0, 7));
+    const [periodo, setPeriodo] = useState(mesActual());
     const [dia, setDia] = useState(diaVencimiento);
 
     const activos = departamentos.filter((d) => d.estado === 'activo');
-    const yaEmitidos = new Set(cargos.filter((c) => c.concepto === 'Expensas' && c.periodo === periodo).map((c) => c.id_departamento));
+    const yaEmitidos = new Set(cargos.filter((c) => c.concepto === CONCEPTO_EXPENSAS && c.periodo === periodo).map((c) => c.id_departamento));
     const aEmitir = activos.filter((d) => !yaEmitidos.has(d.id_departamento));
     const sinPropietario = aEmitir.filter((d) => !d.propietario).length;
     const total = aEmitir.reduce((suma, d) => suma + Number(d.cuota_mensual), 0);

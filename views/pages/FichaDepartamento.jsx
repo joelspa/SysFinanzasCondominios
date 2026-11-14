@@ -12,6 +12,7 @@ import Nota from '../components/Nota';
 import BotonIcono from '../components/BotonIcono';
 import BarraProgreso from '../components/BarraProgreso';
 import SinDatos from '../components/SinDatos';
+import Cargando from '../components/Cargando';
 
 const idDepartamento = parametro('id');
 
@@ -30,13 +31,7 @@ export default function FichaDepartamento() {
     const [pestana, setPestana] = useState('cuenta');
 
     if (!ficha.datos) {
-        return (
-            <div className="panel panel-cargando">
-                {ficha.error
-                    ? <><Icono nombre="alerta" tamano={22} /> {ficha.error}</>
-                    : <><span className="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando la ficha...</>}
-            </div>
-        );
+        return <Cargando texto="Cargando la ficha..." error={ficha.error} />;
     }
 
     const { Departamento: departamento, Cargos: cargos, Pagos: pagos, Residentes: residentes, Traspasos: traspasos } = ficha.datos;

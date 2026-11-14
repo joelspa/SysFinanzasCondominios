@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { ID_CONDOMINIO } = require('./config');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
 
 const SQL_TRASPASOS = "SELECT tr.id_traspaso, tr.id_departamento, d.numero AS departamento, TO_CHAR(tr.fecha, 'YYYY-MM-DD') AS fecha, "

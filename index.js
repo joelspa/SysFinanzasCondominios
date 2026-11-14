@@ -1,15 +1,13 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const app = express();
 
-// Carga las variables de conexión a la base de datos
+// Carga las variables de conexión a la base de datos (antes de los routers, que abren la conexión)
 const archivoEnv = path.join(__dirname, '.env.local');
 if (fs.existsSync(archivoEnv)) {
     process.loadEnvFile(archivoEnv);
 }
 
-const port = process.env.PORT || 3000;
 const indexRouter = require('./routers/indexRouter');
 const personaRouter = require('./routers/personaRouter');
 const departamentoRouter = require('./routers/departamentoRouter');
@@ -22,9 +20,12 @@ const catalogoRouter = require('./routers/catalogoRouter');
 const condominioRouter = require('./routers/condominioRouter');
 const usuarioRouter = require('./routers/usuarioRouter');
 
+const app = express();
+const port = process.env.PORT || 3000;
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use('/public', express.static(__dirname + '/public'));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // API (Express): devuelve JSON
 app.use('/api/persona', personaRouter);

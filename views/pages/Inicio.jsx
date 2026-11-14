@@ -2,8 +2,9 @@ import useDatos from '../hooks/useDatos';
 import Icono from '../components/Icono';
 import Estado from '../components/Estado';
 import Indicador from '../components/Indicador';
+import Cargando from '../components/Cargando';
 import { GraficoColumnas, BarraEstados, BarrasHorizontales } from '../components/Graficos';
-import { dinero, formatoFecha, hoy, desplazarMes, mesCorto, mesLargo, capitalizar, sumar } from '../formato';
+import { dinero, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar } from '../formato';
 import { estaDisponible, enlaceFicha } from '../logica/departamentos';
 
 const SERIES = [
@@ -41,13 +42,7 @@ export default function Inicio() {
     const fuentes = [cargos, ingresos, egresos, departamentos];
     const error = fuentes.map((f) => f.error).find((e) => e);
     if (error || fuentes.some((f) => f.cargando)) {
-        return (
-            <div className="panel panel-cargando">
-                {error
-                    ? <><Icono nombre="alerta" tamano={22} /> No se pudieron cargar los datos del panel: {error}</>
-                    : <><span className="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando el panel...</>}
-            </div>
-        );
+        return <Cargando texto="Cargando el panel..." error={error && 'No se pudieron cargar los datos del panel: ' + error} />;
     }
 
     const listaCargos = cargos.datos.Cargos;
@@ -57,14 +52,14 @@ export default function Inicio() {
     // Solo cuentan los movimientos registrados (los anulados no)
     const pagos = ingresos.datos.Ingresos.filter((i) => i.estado === 'registrado');
     const gastos = egresos.datos.Egresos.filter((e) => e.estado === 'registrado');
-    const mesActual = hoy().slice(0, 7);
+    const esteMes = mesActual();
     const delMes = (lista, mes) => lista.filter((m) => m.fecha.startsWith(mes));
 
     const saldoCaja = Number(caja.saldo);
-    const resultadoMes = sumar(delMes(pagos, mesActual)) - sumar(delMes(gastos, mesActual));
+    const resultadoMes = sumar(delMes(pagos, esteMes)) - sumar(delMes(gastos, esteMes));
 
     const meses = [5, 4, 3, 2, 1, 0].map((n) => {
-        let clave = desplazarMes(mesActual, -n);
+        let clave = desplazarMes(esteMes, -n);
         let entrada = sumar(delMes(pagos, clave));
         let salida = sumar(delMes(gastos, clave));
         let resultado = entrada - salida;
@@ -119,11 +114,11 @@ export default function Inicio() {
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta={'Resultado de ' + mesLargo(mesActual)} valor={dinero(Math.abs(resultadoMes))} icono="balanza"
+                    <Indicador etiqueta={'Resultado de ' + mesLargo(esteMes)} valor={dinero(Math.abs(resultadoMes))} icono="balanza"
                         tono={resultadoMes < 0 ? 'critico' : ''}>
                         <span className="indicador-detalle">
                             <b className={resultadoMes >= 0 ? 'sube' : 'baja'}>{resultadoMes >= 0 ? '▲ Ganancia' : '▼ Pérdida'}</b>
-                            {' '}· cobrado {dinero(sumar(delMes(pagos, mesActual)))}
+                            {' '}· cobrado {dinero(sumar(delMes(pagos, esteMes)))}
                         </span>
                     </Indicador>
                 </div>

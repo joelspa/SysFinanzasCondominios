@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import useCrud from '../hooks/useCrud';
 import { parametro } from '../ruta';
-import { coincide, dinero, formatoFecha, capitalizar, hoy, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, sumar } from '../formato';
 import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
@@ -29,6 +29,7 @@ export default function Ingresos() {
     const [aAnular, setAAnular] = useState(null);   // pago que se va a anular
 
     const { Ingresos: ingresos, Departamentos: departamentos, Tipos: tipos, Pendientes: pendientes } = crud.datos;
+    const formulario = crud.formulario;
 
     function adicionar(idDepartamento) {
         if (departamentos.length === 0) {
@@ -61,12 +62,10 @@ export default function Ingresos() {
     }
 
     const registrados = ingresos.filter((i) => i.estado === 'registrado');
-    const mesActual = hoy().slice(0, 7);
     const filtrados = ingresos.filter((i) => (filtroEstado === '' || i.estado === filtroEstado)
         && (filtroMetodo === '' || i.metodo_pago === filtroMetodo)
         && coincide(busqueda, i.concepto, i.departamento, i.tipo_ingreso));
     const totalFiltrado = sumar(filtrados.filter((i) => i.estado === 'registrado'));
-    const formulario = crud.formulario;
 
     return (
         <>
@@ -76,7 +75,7 @@ export default function Ingresos() {
             <Alerta mensaje={crud.mensaje} onCerrar={crud.cerrarMensaje} />
 
             <Resumen items={[
-                { etiqueta: 'Recaudado este mes', valor: dinero(sumar(registrados.filter((i) => i.fecha.startsWith(mesActual)))) },
+                { etiqueta: 'Recaudado este mes', valor: dinero(sumar(registrados.filter((i) => i.fecha.startsWith(mesActual())))) },
                 { etiqueta: 'Total recaudado', valor: dinero(sumar(registrados)), detalle: registrados.length + (registrados.length === 1 ? ' pago registrado' : ' pagos registrados') },
                 { etiqueta: 'Deuda pendiente', valor: dinero(sumar(pendientes, 'saldo')), tono: pendientes.length > 0 ? 'critico' : undefined },
                 { etiqueta: 'Saldos a favor', valor: dinero(sumar(departamentos, 'saldo_favor')), detalle: 'Pagos adelantados sin aplicar' }

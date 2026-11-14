@@ -19,4 +19,4 @@ module.exports = {
     eliminarPersona: (req, res) => {
         responder(res, objPersonaModel.EliminarPersona({ id_persona: req.body.id_persona }));
     }
-}
+};

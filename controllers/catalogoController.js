@@ -1,5 +1,5 @@
 const catalogoModel = require('../models/catalogoModel');
-const catalogos = require('../models/catalogos');
+const catalogos = require('../config/catalogos');
 const { responder, leerCampos } = require('./respuesta');
 
 // Crea las funciones del controlador para un catálogo (obtener, guardar, eliminar)

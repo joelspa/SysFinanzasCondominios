@@ -1,6 +1,6 @@
 const ingresoModel = require('../models/ingresoModel');
-const { responder, rechazar, leerCampos } = require('./respuesta');
-const { MAX_MESES_ADELANTO } = require('../models/config');
+const { MAX_MESES_ADELANTO } = require('../config/config');
+const { responder, rechazar, leerCampos, leerMotivo } = require('./respuesta');
 const objIngresoModel = new ingresoModel();
 
 const CAMPOS = ['id_departamento', 'id_tipo_ingreso', 'concepto', 'monto', 'fecha', 'metodo_pago', 'aplica_deuda'];
@@ -27,10 +27,10 @@ module.exports = {
         responder(res, objIngresoModel.GuardarIngreso({ ...data, meses_adelantados: meses }).then((nuevo) => nuevo.id_ingreso));
     },
     anularIngreso: (req, res) => {
-        let motivo = String(req.body.motivo || '').trim();
+        let motivo = leerMotivo(req.body);
         if (motivo === '') {
             return rechazar(res, 'Indique el motivo de la anulación');
         }
         responder(res, objIngresoModel.AnularIngreso({ id_ingreso: req.body.id_ingreso, motivo }));
     }
-}
+};

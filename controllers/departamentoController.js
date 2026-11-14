@@ -22,4 +22,4 @@ module.exports = {
     eliminarDepartamento: (req, res) => {
         responder(res, objDepartamentoModel.EliminarDepartamento({ id_departamento: req.body.id_departamento }));
     }
-}
+};

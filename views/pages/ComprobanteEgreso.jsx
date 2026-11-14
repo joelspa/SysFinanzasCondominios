@@ -1,7 +1,8 @@
 import useDatos from '../hooks/useDatos';
 import { parametro } from '../ruta';
 import { dinero, formatoFecha, capitalizar } from '../formato';
-import DocumentoComprobante, { DatosComprobante, CargandoComprobante } from '../secciones/DocumentoComprobante';
+import Cargando from '../components/Cargando';
+import DocumentoComprobante, { DatosComprobante } from '../secciones/DocumentoComprobante';
 
 const idEgreso = parametro('id');
 
@@ -9,7 +10,7 @@ const idEgreso = parametro('id');
 export default function ComprobanteEgreso() {
     const comprobante = useDatos('/api/egreso/obtenerComprobante?id_egreso=' + idEgreso, null);
     if (!comprobante.datos) {
-        return <CargandoComprobante error={comprobante.error} />;
+        return <Cargando texto="Cargando el comprobante..." error={comprobante.error} />;
     }
 
     const { Egreso: egreso, Condominio: condominio } = comprobante.datos;

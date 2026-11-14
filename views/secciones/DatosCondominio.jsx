@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import useCrud from '../hooks/useCrud';
+import { contactoCondominio } from '../formato';
 import Alerta from '../components/Alerta';
+import Cargando from '../components/Cargando';
 import Campo from '../components/Campo';
 import Nota from '../components/Nota';
 import Icono from '../components/Icono';
@@ -30,11 +32,7 @@ export default function DatosCondominio() {
 
     const formulario = crud.formulario;
     if (!formulario) {
-        return (
-            <div className="panel panel-cargando">
-                <span className="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando...
-            </div>
-        );
+        return <Cargando />;
     }
 
     return (
@@ -99,10 +97,7 @@ export default function DatosCondominio() {
                                 <div>
                                     <strong className="d-block">{formulario.nombre || 'Nombre del condominio'}</strong>
                                     <span className="secundario">{formulario.direccion || 'Dirección'}</span>
-                                    <span className="secundario">
-                                        {[formulario.nit && 'NIT ' + formulario.nit, formulario.telefono && 'Tel. ' + formulario.telefono, formulario.correo]
-                                            .filter(Boolean).join(' · ')}
-                                    </span>
+                                    <span className="secundario">{contactoCondominio(formulario)}</span>
                                 </div>
                             </div>
                             <p className="secundario mt-3 mb-0">

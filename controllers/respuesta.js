@@ -32,7 +32,17 @@ function leerCampos(body, campos) {
     return data;
 }
 
+// Motivo de una anulación sin espacios a los lados ('' si no se escribió)
+function leerMotivo(body) {
+    return String(body.motivo || '').trim();
+}
+
 // Formato de período mensual: 'YYYY-MM'
 const PERIODO = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-module.exports = { responder, rechazar, leerCampos, PERIODO };
+// Día de vencimiento de las expensas: del 1 al 28 para que exista en todos los meses
+function esDiaVencimiento(dia) {
+    return Number.isInteger(dia) && dia >= 1 && dia <= 28;
+}
+
+module.exports = { responder, rechazar, leerCampos, leerMotivo, PERIODO, esDiaVencimiento };

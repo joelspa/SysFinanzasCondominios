@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
-import { coincide, dinero, formatoFecha, capitalizar, mesLargo, hoy, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, mesLargo, mesActual, sumar } from '../formato';
 import { ESTADOS_CARGO, CONCEPTOS_CARGO } from '../opciones';
 import { enlaceFicha } from '../logica/departamentos';
 import Encabezado from '../components/Encabezado';
@@ -43,7 +43,7 @@ export default function Cargos() {
             crud.avisar('warning', 'Primero debe registrar al menos un departamento activo');
             return;
         }
-        let periodo = hoy().slice(0, 7);
+        let periodo = mesActual();
         crud.abrirFormulario({
             id_cargo: 0, id_departamento: activos[0].id_departamento, concepto: '', periodo,
             vencimiento: vencimientoDe(periodo), monto: ''

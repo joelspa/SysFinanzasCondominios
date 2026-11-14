@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { cifrar } = require('./contrasena');
+const { cifrar } = require('../utils/contrasena');
 const objDao = new dao();
 
 // Nunca se devuelve password_hash: la contraseña no sale del servidor

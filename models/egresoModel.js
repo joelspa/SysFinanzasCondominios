@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { ID_CONDOMINIO, ID_USUARIO } = require('./config');
+const { ID_CONDOMINIO, ID_USUARIO } = require('../config/config');
 const objDao = new dao();
 
 const SQL_EGRESOS = 'SELECT e.id_egreso, e.id_tipo_egreso, t.nombre AS tipo_egreso, e.concepto, e.proveedor, e.numero_documento, '

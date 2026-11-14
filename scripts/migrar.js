@@ -8,7 +8,7 @@ const archivoEnv = path.join(__dirname, '..', '.env.local');
 if (fs.existsSync(archivoEnv)) {
     process.loadEnvFile(archivoEnv);
 }
-const db = require('../models/db');
+const db = require('../config/db');
 
 const archivo = process.argv[2];
 if (!archivo) {

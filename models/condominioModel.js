@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { ID_CONDOMINIO } = require('./config');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
 
 const SQL_CONDOMINIO = 'SELECT id_condominio, nombre, direccion, nit, telefono, correo, dia_vencimiento '

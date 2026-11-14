@@ -1,5 +1,5 @@
 const egresoModel = require('../models/egresoModel');
-const { responder, rechazar, leerCampos } = require('./respuesta');
+const { responder, rechazar, leerCampos, leerMotivo } = require('./respuesta');
 const objEgresoModel = new egresoModel();
 
 const CAMPOS = ['id_tipo_egreso', 'concepto', 'proveedor', 'numero_documento', 'monto', 'fecha', 'metodo_pago', 'observacion'];
@@ -20,10 +20,10 @@ module.exports = {
         }
     },
     anularEgreso: (req, res) => {
-        let motivo = String(req.body.motivo || '').trim();
+        let motivo = leerMotivo(req.body);
         if (motivo === '') {
             return rechazar(res, 'Indique el motivo de la anulación');
         }
         responder(res, objEgresoModel.AnularEgreso({ id_egreso: req.body.id_egreso, motivo }));
     }
-}
+};

@@ -1,4 +1,4 @@
-const { ID_CONDOMINIO, CONCEPTO_EXPENSAS } = require('./config');
+const { ID_CONDOMINIO, CONCEPTO_EXPENSAS } = require('../config/config');
 
 // Emisión de expensas (cargos mensuales). La cuota sale del tipo de departamento, el responsable
 // es el propietario actual y el vencimiento es el día configurado en el condominio.

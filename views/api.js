@@ -1,25 +1,25 @@
 // Funciones para comunicarse con la API de Express
 
-export async function obtener(url) {
+// Hace la petición y devuelve la respuesta estándar { Success, Data, Mensaje }
+async function pedir(url, opciones) {
     try {
-        let respuesta = await fetch(url);
+        let respuesta = await fetch(url, opciones);
         return await respuesta.json();
     } catch {
         return { Success: false, Mensaje: 'No se pudo conectar con el servidor' };
     }
 }
 
-export async function enviar(url, datos) {
-    try {
-        let respuesta = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-        return await respuesta.json();
-    } catch {
-        return { Success: false, Mensaje: 'No se pudo conectar con el servidor' };
-    }
+export function obtener(url) {
+    return pedir(url);
+}
+
+export function enviar(url, datos) {
+    return pedir(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+    });
 }
 
 // Cambia los valores null por '' para poder mostrarlos en los inputs del formulario

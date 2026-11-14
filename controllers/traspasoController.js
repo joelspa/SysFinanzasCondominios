@@ -15,4 +15,4 @@ module.exports = {
         }
         responder(res, objTraspasoModel.RealizarTraspaso(data).then((nuevo) => nuevo.id_traspaso));
     }
-}
+};

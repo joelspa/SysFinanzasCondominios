@@ -1,4 +1,5 @@
 import { capitalizar, mesLargo } from '../formato';
+import { CONCEPTO_EXPENSAS } from '../opciones';
 
 const MAXIMO = 3;
 
@@ -15,7 +16,7 @@ export default function AplicacionesPago({ ingreso }) {
         <div className="chips">
             {aplicaciones.slice(0, MAXIMO).map((a) => (
                 <span key={a.id_cargo} className="chip" title={a.concepto}>
-                    {a.concepto !== 'Expensas' && a.concepto + ' '}{capitalizar(mesLargo(a.periodo))}
+                    {a.concepto !== CONCEPTO_EXPENSAS && a.concepto + ' '}{capitalizar(mesLargo(a.periodo))}
                     {Number(a.monto) < Number(a.total) && ' · parcial'}
                 </span>
             ))}

@@ -1,5 +1,5 @@
 const usuarioModel = require('../models/usuarioModel');
-const { MINIMO } = require('../models/contrasena');
+const { MINIMO } = require('../utils/contrasena');
 const { responder, rechazar, leerCampos } = require('./respuesta');
 const objUsuarioModel = new usuarioModel();
 
@@ -29,4 +29,4 @@ module.exports = {
     eliminarUsuario: (req, res) => {
         responder(res, objUsuarioModel.EliminarUsuario({ id_usuario: req.body.id_usuario }));
     }
-}
+};

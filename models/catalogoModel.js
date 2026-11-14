@@ -1,7 +1,7 @@
 const dao = require('./dao');
 const objDao = new dao();
 
-// Modelo genérico para los catálogos de models/catalogos.js
+// Modelo genérico para los catálogos de config/catalogos.js
 class catalogoModel {
     constructor(config) {
         this.config = config;

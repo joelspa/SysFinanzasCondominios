@@ -1,7 +1,7 @@
 const dao = require('./dao');
-const { reaplicar } = require('./aplicarPagos');
-const { generarExpensas } = require('./expensas');
-const { ID_CONDOMINIO } = require('./config');
+const { reaplicar } = require('../services/aplicarPagos');
+const { generarExpensas } = require('../services/expensas');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
 
 const SQL_CARGOS = "SELECT c.id_cargo, c.id_departamento, d.numero AS departamento, c.concepto, "

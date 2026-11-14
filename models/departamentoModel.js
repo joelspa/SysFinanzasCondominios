@@ -1,6 +1,6 @@
 const dao = require('./dao');
 const traspasoModel = require('./traspasoModel');
-const { ID_CONDOMINIO } = require('./config');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
 const objTraspasoModel = new traspasoModel();
 

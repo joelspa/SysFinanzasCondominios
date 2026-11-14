@@ -35,6 +35,11 @@ export function hoy() {
     return new Date().toLocaleDateString('en-CA');
 }
 
+// Mes actual en formato 'YYYY-MM'
+export function mesActual() {
+    return hoy().slice(0, 7);
+}
+
 // 'Jueves, 30 de octubre de 2026'
 export function fechaLarga() {
     let texto = new Date().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -64,6 +69,12 @@ export function iniciales(nombre) {
 
 export function capitalizar(texto) {
     return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+}
+
+// Línea de contacto del condominio: 'NIT 123 · Tel. 700 · correo@condominio.com' (omite los vacíos)
+export function contactoCondominio(condominio) {
+    return [condominio.nit && 'NIT ' + condominio.nit, condominio.telefono && 'Tel. ' + condominio.telefono, condominio.correo]
+        .filter(Boolean).join(' · ');
 }
 
 // Suma un campo numérico de una lista de registros

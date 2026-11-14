@@ -1,7 +1,7 @@
 const dao = require('./dao');
-const { reaplicar } = require('./aplicarPagos');
-const { adelantarExpensas } = require('./expensas');
-const { ID_CONDOMINIO, ID_USUARIO, CONCEPTO_EXPENSAS } = require('./config');
+const { reaplicar } = require('../services/aplicarPagos');
+const { adelantarExpensas } = require('../services/expensas');
+const { ID_CONDOMINIO, ID_USUARIO, CONCEPTO_EXPENSAS } = require('../config/config');
 const objDao = new dao();
 
 // Cargos que cubre cada pago, como lista JSON: [{ id_cargo, concepto, periodo, monto, total }]

@@ -1,4 +1,5 @@
 import Icono from '../components/Icono';
+import { contactoCondominio } from '../formato';
 
 // Hoja de comprobante lista para imprimir o guardar como PDF (de pago o de gasto).
 //   tipo: 'Comprobante de pago' | 'Comprobante de egreso'
@@ -7,6 +8,7 @@ import Icono from '../components/Icono';
 //   firmas: textos de las líneas de firma
 export default function DocumentoComprobante({ tipo, numero, condominio, volver, motivoAnulacion, firmas, children }) {
     let anulado = !!motivoAnulacion;
+    let contacto = condominio ? contactoCondominio(condominio) : '';
     return (
         <>
             <div className="comprobante-acciones no-imprimir">
@@ -25,12 +27,7 @@ export default function DocumentoComprobante({ tipo, numero, condominio, volver,
                         <div>
                             <strong className="d-block">{condominio ? condominio.nombre : 'Condominio'}</strong>
                             <span className="secundario">{condominio ? condominio.direccion : ''}</span>
-                            {condominio && (condominio.nit || condominio.telefono || condominio.correo) && (
-                                <span className="secundario">
-                                    {[condominio.nit && 'NIT ' + condominio.nit, condominio.telefono && 'Tel. ' + condominio.telefono, condominio.correo]
-                                        .filter(Boolean).join(' · ')}
-                                </span>
-                            )}
+                            {contacto && <span className="secundario">{contacto}</span>}
                         </div>
                     </div>
                     <div className="text-end">
@@ -59,16 +56,5 @@ export function DatosComprobante({ datos }) {
                 <div key={dato.etiqueta}><dt>{dato.etiqueta}</dt><dd>{dato.valor || '—'}</dd></div>
             ))}
         </dl>
-    );
-}
-
-// Pantalla mientras carga o si falló la carga del comprobante
-export function CargandoComprobante({ error }) {
-    return (
-        <div className="panel panel-cargando">
-            {error
-                ? <><Icono nombre="alerta" tamano={22} /> {error}</>
-                : <><span className="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando el comprobante...</>}
-        </div>
     );
 }

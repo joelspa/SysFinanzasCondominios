@@ -4,7 +4,7 @@ import Opciones from '../components/Opciones';
 import Nota from '../components/Nota';
 import Icono from '../components/Icono';
 import VistaPreviaPago from './VistaPreviaPago';
-import { METODOS_PAGO, MAX_MESES_ADELANTO } from '../opciones';
+import { METODOS_PAGO, MAX_MESES_ADELANTO, CONCEPTO_EXPENSAS } from '../opciones';
 import { dinero, sumar } from '../formato';
 import { periodosAdelantados, simularPago } from '../logica/pagos';
 
@@ -22,7 +22,7 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
 
     const adelantos = esNuevo && aplica && departamento
         ? periodosAdelantados(departamento.ultima_expensa, meses)
-            .map((periodo) => ({ clave: 'nuevo-' + periodo, concepto: 'Expensas', periodo, saldo: cuota, nuevo: true }))
+            .map((periodo) => ({ clave: 'nuevo-' + periodo, concepto: CONCEPTO_EXPENSAS, periodo, saldo: cuota, nuevo: true }))
         : [];
     const cargosVista = deudas.map((c) => ({ clave: 'cargo-' + c.id_cargo, concepto: c.concepto, periodo: c.periodo, saldo: c.saldo }))
         .concat(adelantos);

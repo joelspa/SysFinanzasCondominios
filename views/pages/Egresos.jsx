@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
-import { coincide, dinero, formatoFecha, capitalizar, hoy, mesLargo, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, mesLargo, sumar } from '../formato';
 import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
@@ -75,7 +75,7 @@ export default function Egresos() {
                     etiqueta: 'Saldo en caja', valor: dinero(saldo), detalle: 'Ingresos menos gastos registrados',
                     tono: saldo < 0 ? 'critico' : 'bueno'
                 },
-                { etiqueta: 'Gastado en ' + mesLargo(hoy().slice(0, 7)), valor: dinero(caja.egresos_mes) },
+                { etiqueta: 'Gastado en ' + mesLargo(mesActual()), valor: dinero(caja.egresos_mes) },
                 {
                     etiqueta: resultadoMes >= 0 ? 'Ganancia del mes' : 'Pérdida del mes', valor: dinero(Math.abs(resultadoMes)),
                     detalle: 'Ingresos ' + dinero(caja.ingresos_mes) + ' · Gastos ' + dinero(caja.egresos_mes),
