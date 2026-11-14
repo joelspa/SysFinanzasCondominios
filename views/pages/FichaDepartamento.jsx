@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import useDatos from '../hooks/useDatos';
+import { enviar } from '../api';
 import { parametro } from '../ruta';
 import { dinero, decimal, formatoFecha, capitalizar, mesLargo, sumar } from '../formato';
 import { ocupacion } from '../logica/departamentos';
@@ -13,10 +14,12 @@ import BotonIcono from '../components/BotonIcono';
 import BarraProgreso from '../components/BarraProgreso';
 import SinDatos from '../components/SinDatos';
 import Cargando from '../components/Cargando';
+import Alerta from '../components/Alerta';
+import ModalTraspaso from '../secciones/ModalTraspaso';
 
 const idDepartamento = parametro('id');
 
-// Deuda pendiente agrupada por quien era el responsable del cargo (historial de propietarios)
+// Deuda pendiente agrupada por el responsable de cada cargo (normalmente el propietario actual)
 function deudaPorResponsable(cargos) {
     let grupos = {};
     cargos.filter((c) => Number(c.saldo) > 0).forEach((c) => {
@@ -28,7 +31,22 @@ function deudaPorResponsable(cargos) {
 
 export default function FichaDepartamento() {
     const ficha = useDatos('/api/departamento/obtenerFicha?id_departamento=' + idDepartamento, null);
+    // Departamentos y personas para el formulario de traspaso
+    const datosTraspaso = useDatos('/api/traspaso/obtenerTraspasos', { Traspasos: [], Departamentos: [], Personas: [] });
     const [pestana, setPestana] = useState('cuenta');
+    const [traspasando, setTraspasando] = useState(false);
+    const [mensaje, setMensaje] = useState(null);
+
+    async function traspasar(datos) {
+        let resultado = await enviar('/api/traspaso/realizarTraspaso', datos);
+        if (!resultado.Success) {
+            return resultado.Mensaje;
+        }
+        setTraspasando(false);
+        setMensaje({ tipo: 'success', texto: 'El traspaso se registró correctamente' });
+        ficha.recargar();
+        datosTraspaso.recargar();
+    }
 
     if (!ficha.datos) {
         return <Cargando texto="Cargando la ficha..." error={ficha.error} />;
@@ -43,6 +61,7 @@ export default function FichaDepartamento() {
     return (
         <>
             <a className="volver no-imprimir" href="/departamento"><Icono nombre="volver" tamano={16} /> Departamentos</a>
+            <Alerta mensaje={mensaje} onCerrar={() => setMensaje(null)} />
 
             <section className="panel ficha-cabecera">
                 <div className="ficha-numero"><Icono nombre="departamentos" tamano={26} /></div>
@@ -60,6 +79,9 @@ export default function FichaDepartamento() {
                 <div className="encabezado-acciones no-imprimir">
                     <button className="btn btn-light" onClick={() => window.print()}>
                         <Icono nombre="imprimir" tamano={16} /> Imprimir
+                    </button>
+                    <button className="btn btn-outline-primary" onClick={() => setTraspasando(true)} disabled={datosTraspaso.cargando}>
+                        <Icono nombre="traspaso" tamano={16} /> Traspasar propiedad
                     </button>
                     <a className="btn btn-primary" href={'/ingreso?departamento=' + departamento.id_departamento}>
                         <Icono nombre="ingresos" tamano={16} /> Registrar pago
@@ -224,7 +246,7 @@ export default function FichaDepartamento() {
                                                 <strong>{traspaso.propietario_anterior || 'Sin propietario'}</strong> → <strong>{traspaso.propietario_nuevo}</strong>
                                                 <span className="secundario">
                                                     {Number(traspaso.deuda_pendiente) > 0
-                                                        ? 'Deuda pendiente al traspaso: ' + dinero(traspaso.deuda_pendiente)
+                                                        ? 'Deuda transferida al nuevo propietario: ' + dinero(traspaso.deuda_pendiente)
                                                         : 'Sin deuda al momento del traspaso'}
                                                     {traspaso.observacion && ' · ' + traspaso.observacion}
                                                 </span>
@@ -238,7 +260,7 @@ export default function FichaDepartamento() {
                     <div className="col-lg-5">
                         <section className="panel h-100">
                             <div className="panel-cabecera">
-                                <div><h2>Deuda por responsable</h2><p>Quién debía cada cargo cuando se emitió</p></div>
+                                <div><h2>Deuda por responsable</h2><p>Con cada traspaso, la deuda pendiente pasa al nuevo propietario</p></div>
                             </div>
                             <div className="panel-cuerpo">
                                 {deudores.length === 0 ? (
@@ -258,6 +280,13 @@ export default function FichaDepartamento() {
                         </section>
                     </div>
                 </div>
+            )}
+
+            {/* Solo se ofrece este departamento: el traspaso se hace desde su propia ficha */}
+            {traspasando && (
+                <ModalTraspaso personas={datosTraspaso.datos.Personas} idDepartamento={departamento.id_departamento}
+                    departamentos={datosTraspaso.datos.Departamentos.filter((d) => d.id_departamento == departamento.id_departamento)}
+                    onCerrar={() => setTraspasando(false)} onConfirmar={traspasar} />
             )}
         </>
     );

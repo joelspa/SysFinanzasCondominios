@@ -7,7 +7,7 @@ import Casilla from '../components/Casilla';
 import { dinero, hoy } from '../formato';
 
 // Traspaso de propiedad: cierra al propietario actual y registra al nuevo.
-// Si el departamento tiene deuda se advierte y hay que confirmarlo (queda registrada en el historial).
+// La deuda es del departamento: si tiene, pasa al nuevo propietario y hay que confirmarlo.
 //   idDepartamento: departamento elegido al abrir (opcional)
 //   onConfirmar(datos) devuelve un mensaje de error o null si salió bien
 export default function ModalTraspaso({ departamentos, personas, idDepartamento, onCerrar, onConfirmar }) {
@@ -18,6 +18,7 @@ export default function ModalTraspaso({ departamentos, personas, idDepartamento,
 
     const departamento = departamentos.find((d) => d.id_departamento == datos.id_departamento);
     const deuda = Number(departamento ? departamento.deuda : 0);
+    const saldoFavor = Number(departamento ? departamento.saldo_favor : 0);
     const candidatos = personas.filter((p) => !departamento || p.id_persona != departamento.id_propietario);
 
     function cambiar(e) {
@@ -40,7 +41,7 @@ export default function ModalTraspaso({ departamentos, personas, idDepartamento,
                     </select>
                 </Campo>
                 <Campo etiqueta="Fecha del traspaso" requerido ancho="col-md-6">
-                    <input name="fecha" type="date" className="form-control" value={datos.fecha} onChange={cambiar} />
+                    <input name="fecha" type="date" className="form-control" max={hoy()} value={datos.fecha} onChange={cambiar} />
                 </Campo>
 
                 <div className="col-12">
@@ -64,16 +65,24 @@ export default function ModalTraspaso({ departamentos, personas, idDepartamento,
 
                 {deuda > 0 ? (
                     <div className="col-12">
-                        <Nota tono="aviso" titulo={'El departamento tiene una deuda de ' + dinero(deuda)}>
-                            La deuda queda registrada a nombre del propietario anterior y sigue perteneciendo
-                            al departamento hasta que se pague.
+                        <Nota tono="aviso" titulo={'El nuevo propietario asume una deuda de ' + dinero(deuda)}>
+                            La deuda pertenece al departamento: los cargos pendientes pasan a nombre del nuevo
+                            propietario. Si el propietario actual va a pagarla, registre primero ese pago.
                         </Nota>
-                        <Casilla etiqueta="Entiendo y deseo registrar el traspaso con deuda pendiente"
+                        <Casilla etiqueta="Confirmo que el nuevo propietario asume la deuda pendiente"
                             marcado={datos.confirmar_deuda} onCambiar={(valor) => setDatos({ ...datos, confirmar_deuda: valor })} />
                     </div>
                 ) : (
                     <div className="col-12">
                         <Nota tono="bueno">El departamento no tiene deudas pendientes.</Nota>
+                    </div>
+                )}
+                {saldoFavor > 0 && (
+                    <div className="col-12">
+                        <Nota tono="info">
+                            El departamento tiene {dinero(saldoFavor)} a favor: se queda en el departamento y cubrirá
+                            los próximos cargos del nuevo propietario.
+                        </Nota>
                     </div>
                 )}
 

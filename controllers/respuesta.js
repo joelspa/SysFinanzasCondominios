@@ -45,4 +45,10 @@ function esDiaVencimiento(dia) {
     return Number.isInteger(dia) && dia >= 1 && dia <= 28;
 }
 
-module.exports = { responder, rechazar, leerCampos, leerMotivo, PERIODO, esDiaVencimiento };
+// true si la fecha ('YYYY-MM-DD') es posterior a hoy: no se registran movimientos que aún no ocurrieron
+function esFechaFutura(fecha) {
+    let hoy = new Date().toLocaleDateString('en-CA');   // 'YYYY-MM-DD' en hora local
+    return String(fecha) > hoy;
+}
+
+module.exports = { responder, rechazar, leerCampos, leerMotivo, PERIODO, esDiaVencimiento, esFechaFutura };

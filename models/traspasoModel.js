@@ -13,7 +13,7 @@ class traspasoModel {
 
     // Devuelve el historial de traspasos y los departamentos y personas para el formulario
     ObtenerTraspasos() {
-        let sqlDepartamentos = 'SELECT id_departamento, numero, id_propietario, propietario, deuda '
+        let sqlDepartamentos = 'SELECT id_departamento, numero, id_propietario, propietario, deuda, saldo_favor '
             + 'FROM v_departamento WHERE id_condominio = $1 ORDER BY numero';
         return Promise.all([
             objDao.consultar(SQL_TRASPASOS + 'ORDER BY tr.fecha DESC, tr.id_traspaso DESC'),
@@ -29,8 +29,10 @@ class traspasoModel {
             [idDepartamento]);
     }
 
-    // Transacción: cierra a los propietarios actuales, registra al nuevo y guarda el traspaso con la deuda
-    // que tenía el departamento. Los cargos anteriores siguen a nombre de quien era responsable.
+    // Transacción: cierra a los propietarios actuales, registra al nuevo, le pasa la deuda pendiente
+    // y guarda el traspaso con el monto transferido.
+    // Regla del negocio: la deuda es del departamento, así que quien lo compra la asume. Los cargos
+    // ya pagados quedan a nombre de quien era responsable (historial).
     RealizarTraspaso(data) {
         return objDao.transaccion(async function (t) {
             let anteriores = await t.any("SELECT id_residente, id_persona, TO_CHAR(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio "
@@ -47,7 +49,7 @@ class traspasoModel {
             let { deuda } = await t.one('SELECT COALESCE(SUM(saldo), 0) AS deuda FROM v_cargo WHERE id_departamento = $1',
                 [data.id_departamento]);
             if (Number(deuda) > 0 && !data.confirmar_deuda) {
-                throw new Error('El departamento tiene una deuda pendiente. Confirme el traspaso para continuar');
+                throw new Error('El departamento tiene una deuda pendiente. Confirme que el nuevo propietario la asume para continuar');
             }
 
             if (anteriores.length > 0) {
@@ -56,6 +58,10 @@ class traspasoModel {
             }
             await t.none("INSERT INTO residente (id_departamento, id_persona, tipo_relacion, fecha_inicio, estado) "
                 + "VALUES ($1, $2, 'propietario', $3, 'activo')", [data.id_departamento, data.id_propietario_nuevo, data.fecha]);
+
+            await t.none('UPDATE cargo SET id_responsable = $2 WHERE id_cargo IN '
+                + '(SELECT id_cargo FROM v_cargo WHERE id_departamento = $1 AND saldo > 0)',
+                [data.id_departamento, data.id_propietario_nuevo]);
 
             let sql = 'INSERT INTO traspaso (id_departamento, id_propietario_anterior, id_propietario_nuevo, fecha, deuda_pendiente, observacion) '
                 + 'VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_traspaso';

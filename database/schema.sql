@@ -77,7 +77,7 @@ CREATE TABLE usuario (
 CREATE TABLE cargo (
     id_cargo        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_departamento INT NOT NULL REFERENCES departamento(id_departamento),
-    id_responsable  INT REFERENCES persona(id_persona),   -- propietario cuando se emitió el cargo (historial)
+    id_responsable  INT REFERENCES persona(id_persona),   -- propietario al emitirlo; si queda impago, un traspaso lo pasa al nuevo propietario
     concepto        VARCHAR(180) NOT NULL,
     periodo         DATE NOT NULL,                 -- poner el día 1 del mes (ej. 2026-10-01)
     monto           DECIMAL(18,2) NOT NULL CHECK (monto > 0),
@@ -111,14 +111,15 @@ CREATE TABLE ingreso_cargo (
     UNIQUE (id_ingreso, id_cargo)
 );
 
--- Historial de traspasos de propiedad
+-- Historial de traspasos de propiedad. La deuda es del departamento: al traspasarlo,
+-- los cargos con saldo pendiente pasan a nombre del nuevo propietario.
 CREATE TABLE traspaso (
     id_traspaso             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_departamento         INT NOT NULL REFERENCES departamento(id_departamento),
     id_propietario_anterior INT REFERENCES persona(id_persona),       -- NULL si no tenía propietario
     id_propietario_nuevo    INT NOT NULL REFERENCES persona(id_persona),
     fecha                   DATE NOT NULL DEFAULT CURRENT_DATE,
-    deuda_pendiente         DECIMAL(18,2) NOT NULL DEFAULT 0,        -- deuda del departamento al momento del traspaso
+    deuda_pendiente         DECIMAL(18,2) NOT NULL DEFAULT 0,        -- deuda que asumió el nuevo propietario
     observacion             VARCHAR(250),
     CHECK (id_propietario_anterior IS NULL OR id_propietario_anterior <> id_propietario_nuevo)
 );

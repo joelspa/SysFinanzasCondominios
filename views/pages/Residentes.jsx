@@ -166,7 +166,7 @@ export default function Residentes() {
                             <th>Departamento</th>
                             <th>Propietario anterior</th>
                             <th>Nuevo propietario</th>
-                            <th className="text-end">Deuda al traspaso</th>
+                            <th className="text-end">Deuda transferida</th>
                             <th>Observación</th>
                         </tr>
                     </thead>
@@ -233,7 +233,7 @@ export default function Residentes() {
                                 <Nota tono="aviso" titulo={'Este departamento ya tiene como propietario a '
                                     + coPropietarios.map((r) => r.persona).join(' y ')}>
                                     Si vendió el departamento, registre un traspaso: así el propietario anterior queda en el
-                                    historial con su fecha de salida y sus deudas.
+                                    historial con su fecha de salida y la deuda pendiente pasa al nuevo propietario.
                                     <div className="mt-2">
                                         <button type="button" className="btn btn-sm btn-outline-primary" onClick={irATraspaso}>
                                             <Icono nombre="traspaso" tamano={14} /> Registrar traspaso en su lugar
