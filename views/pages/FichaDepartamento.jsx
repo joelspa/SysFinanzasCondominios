@@ -2,7 +2,7 @@ import { useState } from 'react';
 import useDatos from '../hooks/useDatos';
 import { enviar } from '../api';
 import { parametro } from '../ruta';
-import { dinero, decimal, formatoFecha, capitalizar, mesLargo, sumar } from '../formato';
+import { dinero, decimal, formatoFecha, capitalizar, mesLargo, sumar, cantidad } from '../formato';
 import { ocupacion } from '../logica/departamentos';
 import { textoSalida } from '../logica/residentes';
 import Resumen from '../components/Resumen';
@@ -92,7 +92,7 @@ export default function FichaDepartamento() {
             <Resumen items={[
                 {
                     etiqueta: 'Deuda pendiente', valor: dinero(departamento.deuda),
-                    detalle: vencidos.length > 0 ? vencidos.length + ' cargos vencidos' : 'Sin cargos vencidos',
+                    detalle: vencidos.length > 0 ? cantidad(vencidos.length, 'cargo vencido', 'cargos vencidos') : 'Sin cargos vencidos',
                     tono: Number(departamento.deuda) > 0 ? 'critico' : 'bueno'
                 },
                 { etiqueta: 'Saldo a favor', valor: dinero(departamento.saldo_favor), tono: Number(departamento.saldo_favor) > 0 ? 'bueno' : undefined },

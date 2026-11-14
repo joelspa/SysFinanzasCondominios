@@ -60,7 +60,7 @@ export default function CatalogoTipos({ catalogo, id, titulo, ayuda, singular, u
                         <th>Descripción</th>
                         {conCuota && <th className="text-end">Cuota mensual</th>}
                         <th className="text-end">En uso</th>
-                        <th className="text-end">Acciones</th>
+                        <th className="text-end columna-acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>

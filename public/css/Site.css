@@ -10,7 +10,7 @@
     --borde-suave: #f0f2f5;
     --texto: #0f172a;
     --texto-2: #475569;
-    --texto-3: #64748b;
+    --texto-3: #5b6b82;
     --menu: #0f172a;
     --menu-texto: #a3b0c2;
     --serie: #2a78d6;
@@ -30,6 +30,31 @@ body {
     color: var(--texto);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
+    caret-color: var(--brand);
+}
+
+::selection {
+    background: var(--serie-suave);
+    color: var(--texto);
+}
+
+/* Foco visible al navegar con el teclado (enlaces, menú y botones de ícono; Bootstrap ya cubre .btn y los campos) */
+:focus-visible {
+    outline: 2px solid var(--serie);
+    outline-offset: 2px;
+}
+
+/* Quien pide menos movimiento en su sistema no ve animaciones */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* El gris de Bootstrap para textos como "Sin propietario" no alcanza el contraste mínimo: se usa el del sistema */
+.text-body-tertiary {
+    color: var(--texto-3) !important;
 }
 
 /* ===== Ajustes de Bootstrap ===== */
@@ -747,9 +772,15 @@ body {
 /* ===== Resumen encima de las tablas ===== */
 .resumen {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
+}
+
+@media (max-width: 991.98px) {
+    .resumen {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .resumen-item {
@@ -797,7 +828,7 @@ body {
 .buscador {
     position: relative;
     flex: 1 1 260px;
-    max-width: 380px;
+    max-width: 440px;
 }
 
 .buscador svg {
@@ -811,6 +842,7 @@ body {
 
 .buscador input {
     padding-left: 2.3rem;
+    text-overflow: ellipsis;
 }
 
 .tabla {
@@ -819,7 +851,7 @@ body {
 }
 
 .tabla thead th {
-    padding: 0.75rem 1rem;
+    padding: 0.75rem;
     font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -831,7 +863,7 @@ body {
 }
 
 .tabla td {
-    padding: 0.85rem 1rem;
+    padding: 0.85rem 0.75rem;
     vertical-align: middle;
     border-color: var(--borde-suave);
 }
@@ -850,8 +882,17 @@ body {
     border-bottom: 0;
 }
 
+/* Si la tabla no cabe y se desplaza de lado, los botones de cada fila quedan fijos a la derecha
+   para que siempre estén a la vista (en celular no: ocuparían casi la mitad de la pantalla) */
+@media (min-width: 768px) {
+    .tabla .columna-acciones {
+        position: sticky;
+        right: 0;
+    }
+}
+
 .tabla tfoot th {
-    padding: 0.85rem 1rem;
+    padding: 0.85rem 0.75rem;
     background: var(--superficie-2);
     border-top: 1px solid var(--borde);
     border-bottom: 0;
@@ -1030,7 +1071,6 @@ li.anulado {
     padding: 0.9rem 0.75rem 0.9rem 1rem;
     background: var(--superficie);
     border: 1px solid var(--borde);
-    border-left: 4px solid var(--bueno);
     border-radius: 0.75rem;
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
     font-size: 0.9rem;
@@ -1048,16 +1088,8 @@ li.anulado {
     color: var(--bueno);
 }
 
-.aviso-danger {
-    border-left-color: var(--critico);
-}
-
 .aviso-danger .aviso-icono {
     color: var(--critico);
-}
-
-.aviso-warning {
-    border-left-color: var(--aviso);
 }
 
 .aviso-warning .aviso-icono {
@@ -1132,7 +1164,7 @@ li.anulado {
 
 @media (max-width: 575.98px) {
     .tabla-herramientas .form-select {
-        flex: 1 1 140px;
+        flex: 1 1 190px;
         min-width: 0;
     }
 
@@ -1204,8 +1236,18 @@ li.anulado {
     color: var(--texto-3);
 }
 
+.resumen-item[class*="tono-"] .resumen-etiqueta::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.4rem;
+    border-radius: 50%;
+    background: var(--tono);
+}
+
 .resumen-item.tono-critico {
-    box-shadow: inset 3px 0 0 var(--critico);
+    --tono: var(--critico);
 }
 
 .resumen-item.tono-critico .resumen-valor {
@@ -1213,11 +1255,11 @@ li.anulado {
 }
 
 .resumen-item.tono-aviso {
-    box-shadow: inset 3px 0 0 var(--aviso);
+    --tono: var(--aviso);
 }
 
 .resumen-item.tono-bueno {
-    box-shadow: inset 3px 0 0 var(--bueno);
+    --tono: var(--bueno);
 }
 
 /* Pestañas */
@@ -1322,7 +1364,7 @@ li.anulado {
 
 /* Barra de progreso de pagos */
 .columna-progreso {
-    min-width: 140px;
+    min-width: 100px;
 }
 
 .progreso {

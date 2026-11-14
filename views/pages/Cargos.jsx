@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
-import { coincide, dinero, formatoFecha, capitalizar, mesLargo, mesActual, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, mesLargo, mesAbreviado, mesActual, sumar, cantidad } from '../formato';
 import { ESTADOS_CARGO, CONCEPTOS_CARGO } from '../opciones';
 import { enlaceFicha } from '../logica/departamentos';
 import Encabezado from '../components/Encabezado';
@@ -91,7 +91,7 @@ export default function Cargos() {
                 { etiqueta: 'Total emitido', valor: dinero(sumar(cargos)), detalle: cargos.length + ' cargos' },
                 { etiqueta: 'Cobrado', valor: dinero(sumar(cargos, 'pagado')), tono: 'bueno' },
                 { etiqueta: 'Por cobrar', valor: dinero(sumar(porCobrar, 'saldo')), detalle: porCobrar.length + ' cargos sin vencer', tono: 'aviso' },
-                { etiqueta: 'En mora', valor: dinero(sumar(vencidos, 'saldo')), detalle: vencidos.length + ' cargos vencidos', tono: vencidos.length > 0 ? 'critico' : undefined }
+                { etiqueta: 'En mora', valor: dinero(sumar(vencidos, 'saldo')), detalle: cantidad(vencidos.length, 'cargo vencido', 'cargos vencidos'), tono: vencidos.length > 0 ? 'critico' : undefined }
             ]} />
 
             <PanelTabla mostrados={filtrados.length} total={cargos.length} herramientas={<>
@@ -111,20 +111,20 @@ export default function Cargos() {
                         <th className="columna-progreso">Pagado</th>
                         <th className="text-end">Saldo</th>
                         <th>Estado</th>
-                        <th className="text-end">Acciones</th>
+                        <th className="text-end columna-acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {filtrados.length === 0 && <SinDatos columnas={9} cargando={crud.cargando} filtrado={cargos.length > 0} />}
                     {filtrados.map((cargo) => (
                         <tr key={cargo.id_cargo}>
-                            <td className="text-nowrap">{capitalizar(mesLargo(cargo.periodo))}</td>
+                            <td className="text-nowrap">{mesAbreviado(cargo.periodo)}</td>
                             <td><a className="etiqueta enlace-etiqueta" href={enlaceFicha(cargo.id_departamento)}>{cargo.departamento}</a></td>
                             <td className="text-nowrap">
                                 {cargo.concepto}
                                 <span className="secundario">Vence {formatoFecha(cargo.vencimiento)}</span>
                             </td>
-                            <td className="text-nowrap">{cargo.responsable || <span className="text-body-tertiary">Sin responsable</span>}</td>
+                            <td>{cargo.responsable || <span className="text-body-tertiary">Sin responsable</span>}</td>
                             <td className="text-end numero">{dinero(cargo.monto)}</td>
                             <td className="columna-progreso">
                                 <BarraProgreso valor={Number(cargo.pagado)} total={Number(cargo.monto)} />

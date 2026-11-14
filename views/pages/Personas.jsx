@@ -53,7 +53,7 @@ export default function Personas() {
                         <th>Teléfono</th>
                         <th>Correo electrónico</th>
                         <th>Vive en</th>
-                        <th className="text-end">Acciones</th>
+                        <th className="text-end columna-acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>

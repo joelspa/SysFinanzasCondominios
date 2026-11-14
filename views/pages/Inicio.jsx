@@ -4,7 +4,7 @@ import Estado from '../components/Estado';
 import Indicador from '../components/Indicador';
 import Cargando from '../components/Cargando';
 import { GraficoColumnas, BarraEstados, BarrasHorizontales } from '../components/Graficos';
-import { dinero, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar } from '../formato';
+import { dinero, dineroConSigno, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar } from '../formato';
 import { estaDisponible, enlaceFicha } from '../logica/departamentos';
 
 const SERIES = [
@@ -109,16 +109,16 @@ export default function Inicio() {
 
             <div className="row g-3 mb-4">
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Saldo en caja" valor={dinero(saldoCaja)} icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}>
+                    <Indicador etiqueta="Saldo en caja" valor={dineroConSigno(saldoCaja)} icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}>
                         <span className="indicador-detalle">Ingresos {dinero(caja.ingresos)} · Gastos {dinero(caja.egresos)}</span>
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta={'Resultado de ' + mesLargo(esteMes)} valor={dinero(Math.abs(resultadoMes))} icono="balanza"
-                        tono={resultadoMes < 0 ? 'critico' : ''}>
+                    <Indicador etiqueta="Resultado del mes" icono="balanza" tono={resultadoMes < 0 ? 'critico' : ''}
+                        valor={<span className={resultadoMes < 0 ? 'baja' : ''}>{dineroConSigno(resultadoMes)}</span>}>
                         <span className="indicador-detalle">
-                            <b className={resultadoMes >= 0 ? 'sube' : 'baja'}>{resultadoMes >= 0 ? '▲ Ganancia' : '▼ Pérdida'}</b>
-                            {' '}· cobrado {dinero(sumar(delMes(pagos, esteMes)))}
+                            <b className={resultadoMes >= 0 ? 'sube' : 'baja'}>{resultadoMes >= 0 ? 'Ganancia' : 'Pérdida'}</b>
+                            {' '}en {mesLargo(esteMes)} · cobrado {dinero(sumar(delMes(pagos, esteMes)))}
                         </span>
                     </Indicador>
                 </div>
@@ -152,7 +152,7 @@ export default function Inicio() {
                                 <p>Movimientos registrados por mes (no incluye anulados)</p>
                             </div>
                             <div className="text-end">
-                                <span className="panel-total">{dinero(Math.abs(resultadoPeriodo))}</span>
+                                <span className={'panel-total' + (resultadoPeriodo < 0 ? ' baja' : '')}>{dineroConSigno(resultadoPeriodo)}</span>
                                 <small className="secundario">{resultadoPeriodo >= 0 ? 'de ganancia' : 'de pérdida'} en el período</small>
                             </div>
                         </div>

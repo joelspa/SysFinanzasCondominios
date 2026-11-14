@@ -84,7 +84,7 @@ export default function Usuarios() {
                         <th>Rol</th>
                         <th className="text-end">Movimientos registrados</th>
                         <th>Estado</th>
-                        <th className="text-end">Acciones</th>
+                        <th className="text-end columna-acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>

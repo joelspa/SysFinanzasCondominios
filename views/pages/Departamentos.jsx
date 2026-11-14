@@ -93,7 +93,7 @@ export default function Departamentos() {
                         <th>Ocupación</th>
                         <th className="text-end">Deuda</th>
                         <th>Estado</th>
-                        <th className="text-end">Acciones</th>
+                        <th className="text-end columna-acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>

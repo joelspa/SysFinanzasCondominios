@@ -12,6 +12,11 @@ export function dinero(valor) {
     return 'Bs ' + numero.format(Number(valor) || 0);
 }
 
+// -280 -> '−Bs 280,00': una pérdida o un saldo negativo se lee como tal sin depender del color
+export function dineroConSigno(valor) {
+    return (Number(valor) < 0 ? '−' : '') + dinero(Math.abs(Number(valor) || 0));
+}
+
 // 1250.5 -> 'Bs 1,3 mil' (para ejes de gráficos)
 export function dineroCorto(valor) {
     return 'Bs ' + compacto.format(Number(valor) || 0);
@@ -57,8 +62,18 @@ export function mesCorto(clave) {
     return MESES[Number(clave.slice(5, 7)) - 1];
 }
 
+// '2026-11' -> 'Nov 2026' (para columnas de tabla, donde el nombre completo del mes ocupa demasiado)
+export function mesAbreviado(clave) {
+    return capitalizar(mesCorto(clave)) + ' ' + clave.slice(0, 4);
+}
+
 export function mesLargo(clave) {
     return MESES_LARGOS[Number(clave.slice(5, 7)) - 1] + ' ' + clave.slice(0, 4);
+}
+
+// cantidad(1, 'cargo vencido', 'cargos vencidos') -> '1 cargo vencido'
+export function cantidad(numero, singular, plural) {
+    return numero + ' ' + (numero === 1 ? singular : plural);
 }
 
 // 'Ana Pérez' -> 'AP'
