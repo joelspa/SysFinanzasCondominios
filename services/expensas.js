@@ -1,4 +1,4 @@
-const { ID_CONDOMINIO, CONCEPTO_EXPENSAS } = require('../config/config');
+const { CONCEPTO_EXPENSAS } = require('../config/config');
 
 // Emisión de expensas (cargos mensuales). La cuota sale del tipo de departamento, el responsable
 // es el propietario actual y el vencimiento es el día configurado en el condominio.
@@ -17,24 +17,24 @@ function sumarMeses(periodo, cantidad) {
     return Math.floor(total / 12) + '-' + String(total % 12 + 1).padStart(2, '0');
 }
 
-// Emite la expensa del período ('YYYY-MM') para todos los departamentos activos o solo para uno.
-// Devuelve los departamentos a los que se les creó.
-function generarExpensas(t, periodo, diaVencimiento, idDepartamento = null) {
+// Emite la expensa del período ('YYYY-MM') para todos los departamentos activos del condominio
+// o solo para uno. Devuelve los departamentos a los que se les creó.
+function generarExpensas(t, idCondominio, periodo, diaVencimiento, idDepartamento = null) {
     let vencimiento = periodo + '-' + String(diaVencimiento).padStart(2, '0');
-    return t.any(SQL_GENERAR, [CONCEPTO_EXPENSAS, periodo + '-01', vencimiento, ID_CONDOMINIO, idDepartamento]);
+    return t.any(SQL_GENERAR, [CONCEPTO_EXPENSAS, periodo + '-01', vencimiento, idCondominio, idDepartamento]);
 }
 
 // Emite por adelantado las expensas de los próximos meses de un departamento, desde el mes actual
 // o desde el mes siguiente a su última expensa (el que sea mayor)
-async function adelantarExpensas(t, idDepartamento, meses) {
+async function adelantarExpensas(t, idCondominio, idDepartamento, meses) {
     let { inicio } = await t.one("SELECT TO_CHAR(GREATEST(MAX(periodo) + INTERVAL '1 month', "
         + "DATE_TRUNC('month', CURRENT_DATE)), 'YYYY-MM') AS inicio "
         + 'FROM cargo WHERE id_departamento = $1 AND concepto = $2', [idDepartamento, CONCEPTO_EXPENSAS]);
-    let { dia_vencimiento } = await t.one('SELECT dia_vencimiento FROM condominio WHERE id_condominio = $1', [ID_CONDOMINIO]);
+    let { dia_vencimiento } = await t.one('SELECT dia_vencimiento FROM condominio WHERE id_condominio = $1', [idCondominio]);
 
     let creados = 0;
     for (let i = 0; i < meses; i++) {
-        let filas = await generarExpensas(t, sumarMeses(inicio, i), dia_vencimiento, idDepartamento);
+        let filas = await generarExpensas(t, idCondominio, sumarMeses(inicio, i), dia_vencimiento, idDepartamento);
         creados += filas.length;
     }
     if (creados === 0) {

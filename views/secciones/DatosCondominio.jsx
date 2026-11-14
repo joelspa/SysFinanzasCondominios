@@ -7,8 +7,8 @@ import Campo from '../components/Campo';
 import Nota from '../components/Nota';
 import Icono from '../components/Icono';
 
-// Datos generales del condominio: salen en los comprobantes y definen el vencimiento de las expensas.
-// Es un formulario fijo en la página (no un modal) porque hay un solo condominio.
+// Datos generales del condominio en el que se está trabajando: salen en los comprobantes y definen
+// el vencimiento de las expensas. Es un formulario fijo en la página (no un modal): siempre edita ese condominio.
 export default function DatosCondominio() {
     const crud = useCrud({
         rutas: { obtener: '/api/condominio/obtenerCondominio', guardar: '/api/condominio/guardarCondominio' },

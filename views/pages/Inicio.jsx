@@ -3,8 +3,9 @@ import Icono from '../components/Icono';
 import Estado from '../components/Estado';
 import Indicador from '../components/Indicador';
 import Cargando from '../components/Cargando';
+import Nota from '../components/Nota';
 import { GraficoColumnas, BarraEstados, BarrasHorizontales } from '../components/Graficos';
-import { dinero, dineroConSigno, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar } from '../formato';
+import { dinero, dineroConSigno, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar, cantidad } from '../formato';
 import { estaDisponible, enlaceFicha } from '../logica/departamentos';
 
 const SERIES = [
@@ -20,10 +21,24 @@ function saludo() {
     return hora < 19 ? 'Buenas tardes' : 'Buenas noches';
 }
 
+// Cifra y detalle del indicador de disponibilidad (un condominio recién creado todavía no tiene departamentos)
+function textoDisponibilidad(activos, disponibles, ocupacion) {
+    if (activos === 0) {
+        return { valor: '—', detalle: 'Todavía no hay departamentos registrados' };
+    }
+    if (disponibles === 0) {
+        return { valor: 'Sin disponibles', detalle: 'Todos los departamentos están ocupados' };
+    }
+    return {
+        valor: cantidad(disponibles, 'disponible', 'disponibles'),
+        detalle: (activos - disponibles) + ' de ' + activos + ' ocupados (' + ocupacion.toFixed(0) + '%)'
+    };
+}
+
 // Pagos y gastos juntos, del más reciente al más antiguo
 function ultimosMovimientos(ingresos, egresos, cantidad) {
     let lista = ingresos.map((i) => ({
-        clave: 'i' + i.id_ingreso, fecha: i.fecha, entrada: true, etiqueta: i.departamento,
+        clave: 'i' + i.id_ingreso, fecha: i.fecha, entrada: true, etiqueta: i.departamento || 'Condominio',
         concepto: i.concepto, monto: i.monto, anulado: i.estado === 'anulado', enlace: '/ingreso/comprobante?id=' + i.id_ingreso
     })).concat(egresos.map((e) => ({
         clave: 'e' + e.id_egreso, fecha: e.fecha, entrada: false, etiqueta: 'Gasto',
@@ -89,6 +104,7 @@ export default function Inicio({ usuario }) {
     const activos = listaDepartamentos.filter((d) => d.estado === 'activo');
     const disponibles = activos.filter(estaDisponible);
     const ocupacion = activos.length > 0 ? (activos.length - disponibles.length) / activos.length * 100 : 0;
+    const disponibilidad = textoDisponibilidad(activos.length, disponibles.length, ocupacion);
 
     const morosos = listaDepartamentos.filter((d) => Number(d.deuda) > 0)
         .sort((a, b) => Number(b.deuda) - Number(a.deuda)).slice(0, 6);
@@ -106,6 +122,16 @@ export default function Inicio({ usuario }) {
                     <a className="btn btn-primary" href="/ingreso"><Icono nombre="mas" tamano={16} /> Registrar pago</a>
                 </div>
             </div>
+
+            {listaDepartamentos.length === 0 && (
+                <div className="mb-3">
+                    <Nota tono="info" titulo="Este condominio todavía no tiene departamentos">
+                        Para empezar: revise los <a href="/configuracion#tipoDepartamento">tipos de departamento</a> y sus cuotas,
+                        registre los <a href="/departamento">departamentos</a> y asigne a sus <a href="/residente">propietarios</a>.
+                        Después podrá generar las expensas de cada mes.
+                    </Nota>
+                </div>
+            )}
 
             <div className="row g-3 mb-4">
                 <div className="col-sm-6 col-xl-3">
@@ -131,13 +157,8 @@ export default function Inicio({ usuario }) {
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Disponibilidad" icono="departamentos"
-                        valor={disponibles.length === 0 ? 'Sin disponibles' : disponibles.length + (disponibles.length === 1 ? ' disponible' : ' disponibles')}>
-                        <span className="indicador-detalle">
-                            {disponibles.length === 0
-                                ? 'Todos los departamentos están ocupados'
-                                : (activos.length - disponibles.length) + ' de ' + activos.length + ' ocupados (' + ocupacion.toFixed(0) + '%)'}
-                        </span>
+                    <Indicador etiqueta="Disponibilidad" icono="departamentos" valor={disponibilidad.valor}>
+                        <span className="indicador-detalle">{disponibilidad.detalle}</span>
                         <div className="medidor"><span style={{ width: ocupacion + '%' }}></span></div>
                     </Indicador>
                 </div>

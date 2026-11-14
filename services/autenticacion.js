@@ -1,6 +1,8 @@
 const usuarioModel = require('../models/usuarioModel');
+const condominioModel = require('../models/condominioModel');
 const { verificar } = require('../utils/contrasena');
 const objUsuarioModel = new usuarioModel();
+const objCondominioModel = new condominioModel();
 
 // Reglas del inicio de sesión y del cambio de contraseña.
 
@@ -14,6 +16,11 @@ async function autenticar(correo, contrasena) {
     }
     if (!usuario.activo) {
         throw new Error('Su usuario está desactivado. Consulte con un administrador');
+    }
+    // Un tesorero sin condominios asignados no tendría nada que ver
+    let condominios = await objCondominioModel.ObtenerPermitidos(usuario);
+    if (condominios.length === 0) {
+        throw new Error('Su usuario no tiene ningún condominio asignado. Consulte con un administrador');
     }
     return { id_usuario: usuario.id_usuario, nombre: usuario.nombre, correo: usuario.correo, rol: usuario.rol };
 }

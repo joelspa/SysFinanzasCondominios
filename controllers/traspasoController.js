@@ -6,7 +6,7 @@ const CAMPOS = ['id_departamento', 'id_propietario_nuevo', 'fecha', 'observacion
 
 module.exports = {
     obtenerTraspasos: (req, res) => {
-        responder(res, objTraspasoModel.ObtenerTraspasos());
+        responder(res, objTraspasoModel.ObtenerTraspasos(req.idCondominio));
     },
     realizarTraspaso: (req, res) => {
         let data = {
@@ -19,6 +19,6 @@ module.exports = {
         if (esFechaFutura(data.fecha)) {
             return rechazar(res, 'La fecha del traspaso no puede ser posterior a hoy');
         }
-        responder(res, objTraspasoModel.RealizarTraspaso(data).then((nuevo) => nuevo.id_traspaso));
+        responder(res, objTraspasoModel.RealizarTraspaso(req.idCondominio, data).then((nuevo) => nuevo.id_traspaso));
     }
 };

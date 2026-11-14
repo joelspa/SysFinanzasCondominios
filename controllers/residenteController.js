@@ -6,7 +6,7 @@ const CAMPOS = ['id_departamento', 'id_persona', 'tipo_relacion', 'fecha_inicio'
 
 module.exports = {
     obtenerResidentes: (req, res) => {
-        responder(res, objResidenteModel.ObtenerResidentes());
+        responder(res, objResidenteModel.ObtenerResidentes(req.idCondominio));
     },
     guardarResidente: (req, res) => {
         let data = {
@@ -14,12 +14,12 @@ module.exports = {
             confirmar_copropiedad: req.body.confirmar_copropiedad === true
         };
         if (data.id_residente == 0) {
-            responder(res, objResidenteModel.GuardarResidente(data).then((nuevo) => nuevo.id_residente));
+            responder(res, objResidenteModel.GuardarResidente(req.idCondominio, data).then((nuevo) => nuevo.id_residente));
         } else {
-            responder(res, objResidenteModel.ActualizarResidente(data));
+            responder(res, objResidenteModel.ActualizarResidente(req.idCondominio, data));
         }
     },
     eliminarResidente: (req, res) => {
-        responder(res, objResidenteModel.EliminarResidente({ id_residente: req.body.id_residente }));
+        responder(res, objResidenteModel.EliminarResidente(req.idCondominio, { id_residente: req.body.id_residente }));
     }
 };

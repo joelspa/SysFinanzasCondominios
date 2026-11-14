@@ -2,10 +2,15 @@ const dao = require('./dao');
 const { cifrar } = require('../utils/contrasena');
 const objDao = new dao();
 
-// Nunca se devuelve password_hash: la contraseña no sale del servidor
+// Nunca se devuelve password_hash: la contraseña no sale del servidor.
+//   movimientos: pagos, gastos y traspasos que registró (si tiene, no se puede eliminar)
+//   condominios: ids de los condominios asignados (solo importa en el tesorero; el administrador ve todos)
 const SQL_USUARIOS = 'SELECT u.id_usuario, u.nombre, u.correo, u.rol, u.activo, '
     + '((SELECT COUNT(*) FROM ingreso i WHERE i.id_usuario = u.id_usuario) '
-    + '+ (SELECT COUNT(*) FROM egreso e WHERE e.id_usuario = u.id_usuario))::int AS movimientos FROM usuario u ';
+    + '+ (SELECT COUNT(*) FROM egreso e WHERE e.id_usuario = u.id_usuario) '
+    + '+ (SELECT COUNT(*) FROM traspaso tr WHERE tr.id_usuario = u.id_usuario))::int AS movimientos, '
+    + 'ARRAY(SELECT uc.id_condominio FROM usuario_condominio uc WHERE uc.id_usuario = u.id_usuario ORDER BY uc.id_condominio) AS condominios '
+    + 'FROM usuario u ';
 
 // Siempre debe quedar al menos un administrador activo (si no, nadie podría administrar el sistema).
 // Se revisa antes de que el usuario deje de ser administrador activo (por edición o eliminación).
@@ -18,6 +23,15 @@ async function validarAdministradores(t, idUsuario, sigueSiendoAdmin) {
         [idUsuario]);
     if (otros === 0) {
         throw new Error('Debe quedar al menos un administrador activo en el sistema');
+    }
+}
+
+// Deja al usuario con los condominios indicados. Al administrador no se le guarda ninguno: ve todos.
+async function asignarCondominios(t, idUsuario, data) {
+    await t.none('DELETE FROM usuario_condominio WHERE id_usuario = $1', [idUsuario]);
+    if (data.rol === 'tesorero') {
+        await t.none('INSERT INTO usuario_condominio (id_usuario, id_condominio) SELECT $1, UNNEST($2::int[])',
+            [idUsuario, data.condominios]);
     }
 }
 
@@ -43,26 +57,32 @@ class usuarioModel {
         return objDao.ejecutar('UPDATE usuario SET password_hash = $1 WHERE id_usuario = $2', [await cifrar(contrasena), idUsuario]);
     }
 
+    // Transacción: crea el usuario y le asigna sus condominios
     async GuardarUsuario(data) {
         let sql = 'INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario';
         let params = [data.nombre, data.correo, await cifrar(data.contrasena), data.rol, data.activo];
-        return objDao.insertar(sql, params);
+        return objDao.transaccion(async function (t) {
+            let nuevo = await t.one(sql, params);
+            await asignarCondominios(t, nuevo.id_usuario, data);
+            return nuevo;
+        });
     }
 
-    // Transacción: actualiza los datos y, solo si se escribió una nueva, la contraseña
+    // Transacción: actualiza los datos, sus condominios y, solo si se escribió una nueva, la contraseña
     async ActualizarUsuario(data) {
         let hash = data.contrasena ? await cifrar(data.contrasena) : null;
         return objDao.transaccion(async function (t) {
             await validarAdministradores(t, data.id_usuario, data.rol === 'admin' && data.activo === true);
             await t.none('UPDATE usuario SET nombre = $1, correo = $2, rol = $3, activo = $4 WHERE id_usuario = $5',
                 [data.nombre, data.correo, data.rol, data.activo, data.id_usuario]);
+            await asignarCondominios(t, data.id_usuario, data);
             if (hash) {
                 await t.none('UPDATE usuario SET password_hash = $1 WHERE id_usuario = $2', [hash, data.id_usuario]);
             }
         });
     }
 
-    // Un usuario que registró pagos o gastos no se elimina (es parte del historial): se desactiva
+    // Un usuario que registró pagos, gastos o traspasos no se elimina (es parte del historial): se desactiva
     EliminarUsuario(data) {
         return objDao.transaccion(async function (t) {
             let usuario = await t.oneOrNone(SQL_USUARIOS + 'WHERE u.id_usuario = $1', [data.id_usuario]);

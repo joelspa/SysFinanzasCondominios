@@ -6,7 +6,7 @@ const CAMPOS = ['nombre', 'telefono', 'correo'];
 
 module.exports = {
     obtenerPersonas: (req, res) => {
-        responder(res, objPersonaModel.ObtenerPersonas());
+        responder(res, objPersonaModel.ObtenerPersonas(req.idCondominio));
     },
     guardarPersona: (req, res) => {
         let data = { id_persona: req.body.id_persona, ...leerCampos(req.body, CAMPOS) };

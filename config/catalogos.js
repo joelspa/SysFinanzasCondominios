@@ -3,10 +3,12 @@
 //   tabla, id, campos: dónde se guardan
 //   uso:      subconsulta que cuenta los registros que usan cada fila (t = fila del catálogo)
 //   usadoPor: cómo se nombran esos registros en los mensajes [singular, plural]
+//   porCondominio: cada condominio tiene sus propias filas (los demás catálogos son comunes a todos)
 // Los nombres de tabla y columnas salen solo de aquí, nunca de lo que envía el usuario.
 module.exports = {
     tipoDepartamento: {
         tabla: 'tipo_departamento', id: 'id_tipo_departamento', campos: ['nombre', 'descripcion', 'cuota_mensual'],
+        porCondominio: true,
         uso: 'SELECT COUNT(*) FROM departamento d WHERE d.id_tipo_departamento = t.id_tipo_departamento',
         usadoPor: ['departamento', 'departamentos']
     },

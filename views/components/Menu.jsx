@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import Icono from './Icono';
 import Alerta from './Alerta';
+import Opciones from './Opciones';
 import ModalContrasena from '../secciones/ModalContrasena';
-import useDatos from '../hooks/useDatos';
 import { enviar } from '../api';
 import { fechaLarga, iniciales } from '../formato';
 import { RUTAS_ADMIN, textoRol } from '../opciones';
 
 const grupos = [
-    { titulo: 'General', opciones: [{ ruta: '/', texto: 'Panel principal', icono: 'inicio' }] },
+    {
+        titulo: 'General', opciones: [
+            { ruta: '/', texto: 'Panel principal', icono: 'inicio' },
+            { ruta: '/condominio', texto: 'Condominios', icono: 'edificios' }
+        ]
+    },
     {
         titulo: 'Finanzas', opciones: [
             { ruta: '/ingreso', texto: 'Ingresos', icono: 'ingresos' },
@@ -52,16 +57,26 @@ function gruposPara(usuario) {
 }
 
 // Menú lateral y barra superior (en celular el menú se abre con el botón de la barra)
-//   usuario: quien tiene la sesión abierta { nombre, correo, rol }
+//   usuario: quien tiene la sesión abierta { nombre, correo, rol, condominios, id_condominio }
 export default function Menu({ ruta, usuario }) {
     const [abierto, setAbierto] = useState(false);
     const [cambiandoContrasena, setCambiandoContrasena] = useState(false);
     const [mensaje, setMensaje] = useState(null);
-    const condominio = useDatos('/api/condominio/obtenerCondominio', null);
 
     const visibles = gruposPara(usuario);
     let actual = visibles.flatMap((grupo) => grupo.opciones).find((opcion) => perteneceA(ruta, opcion));
-    let nombre = condominio.datos ? condominio.datos.nombre : 'Finanzas Condominio';
+    let nombre = usuario.condominios.find((c) => c.id_condominio === usuario.id_condominio).nombre;
+
+    // Cambia el condominio en el que se trabaja y vuelve a cargar la página con sus datos.
+    // Una ficha o un comprobante pertenecen a un condominio: desde ahí se vuelve al listado de su sección.
+    async function cambiarCondominio(e) {
+        let resultado = await enviar('/api/condominio/seleccionarCondominio', { id_condominio: Number(e.target.value) });
+        if (!resultado.Success) {
+            setMensaje({ tipo: 'danger', texto: resultado.Mensaje });
+            return;
+        }
+        window.location.href = subpaginas[ruta] && actual ? actual.ruta : window.location.pathname;
+    }
 
     async function cerrarSesion() {
         await enviar('/api/sesion/cerrarSesion', {});
@@ -83,6 +98,15 @@ export default function Menu({ ruta, usuario }) {
                         <small>Finanzas y administración</small>
                     </span>
                 </a>
+                {usuario.condominios.length > 1 && (
+                    <div className="menu-condominio">
+                        <label htmlFor="condominio-activo">Trabajando en</label>
+                        <select id="condominio-activo" className="form-select form-select-sm"
+                            value={usuario.id_condominio} onChange={cambiarCondominio}>
+                            <Opciones lista={usuario.condominios} valor="id_condominio" texto="nombre" />
+                        </select>
+                    </div>
+                )}
                 <nav className="menu-navegacion">
                     {visibles.map((grupo) => (
                         <div key={grupo.titulo}>

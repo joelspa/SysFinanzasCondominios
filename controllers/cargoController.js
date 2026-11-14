@@ -6,7 +6,7 @@ const CAMPOS = ['id_departamento', 'concepto', 'periodo', 'monto', 'vencimiento'
 
 module.exports = {
     obtenerCargos: (req, res) => {
-        responder(res, objCargoModel.ObtenerCargos());
+        responder(res, objCargoModel.ObtenerCargos(req.idCondominio));
     },
     guardarCargo: (req, res) => {
         let data = { id_cargo: req.body.id_cargo, ...leerCampos(req.body, CAMPOS) };
@@ -14,13 +14,13 @@ module.exports = {
             return rechazar(res, 'El período debe tener el formato AAAA-MM');
         }
         if (data.id_cargo == 0) {
-            responder(res, objCargoModel.GuardarCargo(data).then((nuevo) => nuevo.id_cargo));
+            responder(res, objCargoModel.GuardarCargo(req.idCondominio, data).then((nuevo) => nuevo.id_cargo));
         } else {
-            responder(res, objCargoModel.ActualizarCargo(data));
+            responder(res, objCargoModel.ActualizarCargo(req.idCondominio, data));
         }
     },
     eliminarCargo: (req, res) => {
-        responder(res, objCargoModel.EliminarCargo({ id_cargo: req.body.id_cargo }));
+        responder(res, objCargoModel.EliminarCargo(req.idCondominio, { id_cargo: req.body.id_cargo }));
     },
     generarExpensas: (req, res) => {
         let periodo = req.body.periodo;
@@ -31,6 +31,6 @@ module.exports = {
         if (!esDiaVencimiento(dia)) {
             return rechazar(res, 'El día de vencimiento debe estar entre 1 y 28');
         }
-        responder(res, objCargoModel.GenerarExpensas({ periodo, dia_vencimiento: dia }));
+        responder(res, objCargoModel.GenerarExpensas(req.idCondominio, { periodo, dia_vencimiento: dia }));
     }
 };

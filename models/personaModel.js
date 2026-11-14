@@ -9,13 +9,14 @@ const SQL_HISTORIAL = '(SELECT COUNT(*) FROM residente r WHERE r.id_persona = p.
 class personaModel {
     constructor() { }
 
-    // Devuelve las personas con los departamentos donde viven hoy y si tienen historial
-    ObtenerPersonas() {
+    // Devuelve las personas (son comunes a todos los condominios) con los departamentos del condominio
+    // activo donde viven hoy y si tienen historial
+    ObtenerPersonas(idCondominio) {
         let sql = 'SELECT p.*, ' + SQL_HISTORIAL + ', '
             + "(SELECT STRING_AGG(d.numero, ', ' ORDER BY d.numero) FROM residente r JOIN departamento d ON d.id_departamento = r.id_departamento "
-            + "WHERE r.id_persona = p.id_persona AND r.estado = 'activo') AS departamentos "
+            + "WHERE r.id_persona = p.id_persona AND r.estado = 'activo' AND d.id_condominio = $1) AS departamentos "
             + 'FROM persona p ORDER BY p.id_persona';
-        return objDao.consultar(sql);
+        return objDao.consultar(sql, [idCondominio]);
     }
 
     GuardarPersona(data) {

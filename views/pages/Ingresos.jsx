@@ -31,15 +31,14 @@ export default function Ingresos() {
     const { Ingresos: ingresos, Departamentos: departamentos, Tipos: tipos, Pendientes: pendientes } = crud.datos;
     const formulario = crud.formulario;
 
+    // Propone el primer departamento; si el condominio aún no tiene ninguno, queda como ingreso del condominio
     function adicionar(idDepartamento) {
-        if (departamentos.length === 0) {
-            crud.avisar('warning', 'Primero debe registrar al menos un departamento');
-            return;
-        }
+        let departamento = idDepartamento || (departamentos.length > 0 ? departamentos[0].id_departamento : '');
         crud.abrirFormulario({
-            id_ingreso: 0, id_departamento: idDepartamento || departamentos[0].id_departamento,
-            id_tipo_ingreso: tipos.length > 0 ? tipos[0].id_tipo_ingreso : '', concepto: 'Pago de expensas', monto: '',
-            fecha: hoy(), metodo_pago: 'efectivo', aplica_deuda: true, meses_adelantados: 0
+            id_ingreso: 0, id_departamento: departamento,
+            id_tipo_ingreso: tipos.length > 0 ? tipos[0].id_tipo_ingreso : '',
+            concepto: departamento === '' ? '' : 'Pago de expensas', monto: '',
+            fecha: hoy(), metodo_pago: 'efectivo', aplica_deuda: departamento !== '', meses_adelantados: 0
         });
     }
 
@@ -70,7 +69,7 @@ export default function Ingresos() {
     return (
         <>
             <Encabezado titulo="Ingresos"
-                descripcion="Pagos recibidos. Cada pago cubre primero las deudas más antiguas; lo que sobra queda a favor."
+                descripcion="Dinero que entra al condominio. Cada pago de un departamento cubre primero sus deudas más antiguas; lo que sobra queda a favor."
                 textoBoton="Registrar pago" onAdicionar={() => adicionar()} />
             <Alerta mensaje={crud.mensaje} onCerrar={crud.cerrarMensaje} />
 
@@ -104,7 +103,11 @@ export default function Ingresos() {
                     {filtrados.map((ingreso) => (
                         <tr key={ingreso.id_ingreso} className={ingreso.estado === 'anulado' ? 'anulado' : ''}>
                             <td className="text-nowrap">{formatoFecha(ingreso.fecha)}</td>
-                            <td><span className="etiqueta">{ingreso.departamento}</span></td>
+                            <td>
+                                {ingreso.departamento
+                                    ? <span className="etiqueta">{ingreso.departamento}</span>
+                                    : <span className="text-body-tertiary small">Condominio</span>}
+                            </td>
                             <td>
                                 {ingreso.concepto}
                                 <span className="secundario">{ingreso.tipo_ingreso} · {capitalizar(ingreso.metodo_pago)}</span>
@@ -150,7 +153,9 @@ export default function Ingresos() {
                 <ModalAnular titulo="Anular pago" placeholder="Ej. Depósito rechazado por el banco"
                     descripcion="El pago queda en el historial como anulado y su monto vuelve a la deuda del departamento."
                     onCerrar={() => setAAnular(null)} onConfirmar={anular}>
-                    Pago de <b>{dinero(aAnular.monto)}</b> del departamento <b>{aAnular.departamento}</b> del {formatoFecha(aAnular.fecha)}.
+                    Pago de <b>{dinero(aAnular.monto)}</b>
+                    {aAnular.departamento ? <> del departamento <b>{aAnular.departamento}</b></> : ' (ingreso del condominio)'}
+                    {' '}del {formatoFecha(aAnular.fecha)}.
                 </ModalAnular>
             )}
         </>

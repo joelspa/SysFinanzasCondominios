@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { ID_CONDOMINIO } = require('../config/config');
+const { validarDepartamento } = require('../services/condominio');
 const objDao = new dao();
 
 const SQL_TRASPASOS = "SELECT tr.id_traspaso, tr.id_departamento, d.numero AS departamento, TO_CHAR(tr.fecha, 'YYYY-MM-DD') AS fecha, "
@@ -11,19 +11,20 @@ const SQL_TRASPASOS = "SELECT tr.id_traspaso, tr.id_departamento, d.numero AS de
 class traspasoModel {
     constructor() { }
 
-    // Devuelve el historial de traspasos y los departamentos y personas para el formulario
-    ObtenerTraspasos() {
+    // Devuelve el historial de traspasos del condominio y los departamentos y personas para el formulario
+    ObtenerTraspasos(idCondominio) {
         let sqlDepartamentos = 'SELECT id_departamento, numero, id_propietario, propietario, deuda, saldo_favor '
             + 'FROM v_departamento WHERE id_condominio = $1 ORDER BY numero';
         return Promise.all([
-            objDao.consultar(SQL_TRASPASOS + 'ORDER BY tr.fecha DESC, tr.id_traspaso DESC'),
-            objDao.consultar(sqlDepartamentos, [ID_CONDOMINIO]),
+            objDao.consultar(SQL_TRASPASOS + 'WHERE d.id_condominio = $1 ORDER BY tr.fecha DESC, tr.id_traspaso DESC', [idCondominio]),
+            objDao.consultar(sqlDepartamentos, [idCondominio]),
             objDao.consultar('SELECT id_persona, nombre FROM persona ORDER BY nombre')
         ]).then(function (data) {
             return { Traspasos: data[0], Departamentos: data[1], Personas: data[2] };
         });
     }
 
+    // Lo usa la ficha del departamento, que ya comprobó que es del condominio activo
     ObtenerPorDepartamento(idDepartamento) {
         return objDao.consultar(SQL_TRASPASOS + 'WHERE tr.id_departamento = $1 ORDER BY tr.fecha DESC, tr.id_traspaso DESC',
             [idDepartamento]);
@@ -33,7 +34,8 @@ class traspasoModel {
     // y guarda el traspaso con el monto transferido.
     // Regla del negocio: la deuda es del departamento, así que quien lo compra la asume. Los cargos
     // ya pagados quedan a nombre de quien era responsable (historial).
-    RealizarTraspaso(data) {
+    async RealizarTraspaso(idCondominio, data) {
+        await validarDepartamento(idCondominio, data.id_departamento);
         return objDao.transaccion(async function (t) {
             let anteriores = await t.any("SELECT id_residente, id_persona, TO_CHAR(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio "
                 + "FROM residente WHERE id_departamento = $1 AND tipo_relacion = 'propietario' AND estado = 'activo' "

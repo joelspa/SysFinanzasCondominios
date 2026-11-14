@@ -34,6 +34,16 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
         return valor > 0 ? valor.toFixed(2) : '';
     }
 
+    // Sin departamento es un ingreso del condominio: no paga deudas. Al volver a elegir un
+    // departamento se vuelve a proponer aplicarlo a su deuda.
+    function elegirDepartamento(valor) {
+        let veniaSinDepartamento = formulario.id_departamento === '';
+        actualizar({
+            id_departamento: valor, meses_adelantados: 0,
+            aplica_deuda: valor === '' ? false : (veniaSinDepartamento || aplica)
+        });
+    }
+
     function cambiarMeses(valor) {
         let cantidad = Math.min(Math.max(Math.trunc(Number(valor) || 0), 0), MAX_MESES_ADELANTO);
         actualizar({ meses_adelantados: cantidad, monto: sugerido(cantidad) });
@@ -45,8 +55,9 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                 <div className="row g-3">
                     <Campo etiqueta="Departamento" requerido ancho="col-sm-6">
                         <select name="id_departamento" className="form-select" value={formulario.id_departamento}
-                            onChange={(e) => actualizar({ id_departamento: e.target.value, meses_adelantados: 0 })}>
+                            onChange={(e) => elegirDepartamento(e.target.value)}>
                             <Opciones lista={departamentos} valor="id_departamento" texto="numero" />
+                            <option value="">Sin departamento</option>
                         </select>
                     </Campo>
                     <Campo etiqueta="Tipo de ingreso" requerido ancho="col-sm-6">
@@ -54,11 +65,13 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                             <Opciones lista={tipos} valor="id_tipo_ingreso" texto="nombre" />
                         </select>
                     </Campo>
-                    <div className="col-12">
-                        <Casilla etiqueta="Aplicar a la deuda del departamento" marcado={aplica}
-                            descripcion="Desactívelo para ingresos que no pagan cargos, como el alquiler del salón de eventos."
-                            onCambiar={(valor) => actualizar({ aplica_deuda: valor, meses_adelantados: 0 })} />
-                    </div>
+                    {departamento && (
+                        <div className="col-12">
+                            <Casilla etiqueta="Aplicar a la deuda del departamento" marcado={aplica}
+                                descripcion="Desactívelo para ingresos que no pagan cargos, como el alquiler del salón de eventos."
+                                onCambiar={(valor) => actualizar({ aplica_deuda: valor, meses_adelantados: 0 })} />
+                        </div>
+                    )}
                     {esNuevo && aplica && (
                         <Campo etiqueta="Meses por adelantado" ancho="col-sm-6" ayuda={cuota > 0 ? 'Cuota mensual ' + dinero(cuota) : undefined}>
                             <div className="contador">
@@ -110,18 +123,25 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
             </div>
 
             <div className="col-lg-5">
-                <div className="cuenta-resumen">
-                    <h6>Cuenta del departamento</h6>
-                    <dl>
-                        <dt>Propietario</dt>
-                        <dd>{departamento && departamento.propietario ? departamento.propietario : 'Sin propietario registrado'}</dd>
-                        <dt>Deuda pendiente</dt>
-                        <dd className={deuda > 0 ? 'texto-deuda' : ''}>{dinero(deuda)}</dd>
-                        <dt>Saldo a favor</dt>
-                        <dd className={saldoFavor > 0 ? 'sube' : ''}>{dinero(saldoFavor)}</dd>
-                    </dl>
-                </div>
-                {!aplica ? (
+                {departamento && (
+                    <div className="cuenta-resumen">
+                        <h6>Cuenta del departamento</h6>
+                        <dl>
+                            <dt>Propietario</dt>
+                            <dd>{departamento.propietario || 'Sin propietario registrado'}</dd>
+                            <dt>Deuda pendiente</dt>
+                            <dd className={deuda > 0 ? 'texto-deuda' : ''}>{dinero(deuda)}</dd>
+                            <dt>Saldo a favor</dt>
+                            <dd className={saldoFavor > 0 ? 'sube' : ''}>{dinero(saldoFavor)}</dd>
+                        </dl>
+                    </div>
+                )}
+                {!departamento ? (
+                    <Nota tono="info" titulo="Ingreso del condominio">
+                        No pertenece a ningún departamento ni paga deudas. Úselo para el alquiler del salón a un tercero,
+                        los intereses del banco u otro dinero que entra al condominio.
+                    </Nota>
+                ) : !aplica ? (
                     <Nota tono="info">Este ingreso se registra sin aplicarse a la deuda del departamento.</Nota>
                 ) : !esNuevo ? (
                     <Nota tono="info">Al guardar, el sistema vuelve a calcular a qué cargos se aplica este pago.</Nota>

@@ -1,6 +1,8 @@
 const usuarioModel = require('../models/usuarioModel');
+const condominioModel = require('../models/condominioModel');
 const { rechazar } = require('../controllers/respuesta');
 const objUsuarioModel = new usuarioModel();
+const objCondominioModel = new condominioModel();
 
 // La respuesta lleva SinSesion para que la aplicación de React muestre la pantalla de ingreso
 function sinSesion(res) {
@@ -8,17 +10,34 @@ function sinSesion(res) {
     res.send({ "Success": false, "SinSesion": true, "Mensaje": 'Su sesión terminó. Vuelva a ingresar' });
 }
 
-// Deja pasar solo a quien ingresó y sigue activo. Los datos del usuario quedan en req.usuario,
-// leídos de la base en cada petición: si lo desactivan o le cambian el rol, se aplica de inmediato.
+// Condominio en el que está trabajando el usuario: el que eligió, si todavía puede usarlo;
+// si no (recién ingresó, o le quitaron ese condominio), el primero de los suyos
+function condominioActivo(sesion, condominios) {
+    let puedeUsarlo = condominios.some((c) => c.id_condominio === sesion.id_condominio);
+    if (!puedeUsarlo) {
+        sesion.id_condominio = condominios[0].id_condominio;
+    }
+    return sesion.id_condominio;
+}
+
+// Deja pasar solo a quien ingresó, sigue activo y tiene al menos un condominio. Deja en la petición:
+//   req.usuario       datos del usuario
+//   req.condominios   condominios que puede usar [{ id_condominio, nombre }]
+//   req.idCondominio  condominio en el que está trabajando (los modelos lo reciben como parámetro)
+// Todo se lee de la base en cada petición: si lo desactivan, le cambian el rol o le quitan
+// un condominio, se aplica de inmediato.
 async function requiereSesion(req, res, next) {
     if (!req.session.id_usuario) {
         return sinSesion(res);
     }
     let usuario = await objUsuarioModel.ObtenerActivo(req.session.id_usuario);
-    if (!usuario) {
+    let condominios = usuario ? await objCondominioModel.ObtenerPermitidos(usuario) : [];
+    if (condominios.length === 0) {
         return req.session.destroy(() => sinSesion(res));
     }
     req.usuario = usuario;
+    req.condominios = condominios;
+    req.idCondominio = condominioActivo(req.session, condominios);
     next();
 }
 

@@ -7,15 +7,19 @@ const CAMPOS = ['id_departamento', 'id_tipo_ingreso', 'concepto', 'monto', 'fech
 
 module.exports = {
     obtenerIngresos: (req, res) => {
-        responder(res, objIngresoModel.ObtenerIngresos());
+        responder(res, objIngresoModel.ObtenerIngresos(req.idCondominio));
     },
     obtenerComprobante: (req, res) => {
-        responder(res, objIngresoModel.ObtenerComprobante(req.query.id_ingreso));
+        responder(res, objIngresoModel.ObtenerComprobante(req.idCondominio, req.query.id_ingreso));
     },
     guardarIngreso: (req, res) => {
         let data = { id_ingreso: req.body.id_ingreso, ...leerCampos(req.body, CAMPOS) };
+        // Sin departamento es un ingreso del condominio: no hay deuda a la que aplicarlo
+        if (!data.id_departamento && data.aplica_deuda) {
+            return rechazar(res, 'Un ingreso sin departamento no puede aplicarse a una deuda');
+        }
         if (data.id_ingreso != 0) {
-            return responder(res, objIngresoModel.ActualizarIngreso(data));
+            return responder(res, objIngresoModel.ActualizarIngreso(req.idCondominio, data));
         }
         let meses = Number(req.body.meses_adelantados || 0);
         if (!Number.isInteger(meses) || meses < 0 || meses > MAX_MESES_ADELANTO) {
@@ -25,13 +29,13 @@ module.exports = {
             return rechazar(res, 'Para adelantar meses el pago debe aplicarse a la deuda del departamento');
         }
         let nuevo = { ...data, meses_adelantados: meses, id_usuario: req.usuario.id_usuario };
-        responder(res, objIngresoModel.GuardarIngreso(nuevo).then((ingreso) => ingreso.id_ingreso));
+        responder(res, objIngresoModel.GuardarIngreso(req.idCondominio, nuevo).then((ingreso) => ingreso.id_ingreso));
     },
     anularIngreso: (req, res) => {
         let motivo = leerMotivo(req.body);
         if (motivo === '') {
             return rechazar(res, 'Indique el motivo de la anulación');
         }
-        responder(res, objIngresoModel.AnularIngreso({ id_ingreso: req.body.id_ingreso, motivo }));
+        responder(res, objIngresoModel.AnularIngreso(req.idCondominio, { id_ingreso: req.body.id_ingreso, motivo }));
     }
 };

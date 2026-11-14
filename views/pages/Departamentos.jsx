@@ -35,10 +35,17 @@ export default function Departamentos() {
     const { Departamentos: departamentos, Tipos: tipos } = crud.datos;
     const formulario = crud.formulario;
 
+    // Cada condominio define sus tipos (con la cuota): sin al menos uno no se puede crear un departamento
+    const sinTipos = !crud.cargando && tipos.length === 0;
+
     function adicionar() {
+        if (sinTipos) {
+            crud.avisar('warning', 'Primero cree los tipos de departamento de este condominio en Configuración');
+            return;
+        }
         crud.abrirFormulario({
             id_departamento: 0, numero: '', piso: '', metros_cuadrados: '', estado: 'activo',
-            id_tipo_departamento: tipos.length > 0 ? tipos[0].id_tipo_departamento : ''
+            id_tipo_departamento: tipos[0].id_tipo_departamento
         });
     }
 
@@ -54,6 +61,15 @@ export default function Departamentos() {
             <Encabezado titulo="Departamentos" descripcion="Unidades del condominio con su ocupación, propietario y estado de cuenta."
                 textoBoton="Nuevo departamento" onAdicionar={adicionar} />
             <Alerta mensaje={crud.mensaje} onCerrar={crud.cerrarMensaje} />
+
+            {sinTipos && (
+                <div className="mb-3">
+                    <Nota tono="aviso" titulo="Este condominio todavía no tiene tipos de departamento">
+                        Cada tipo define la cuota mensual de sus departamentos. Créelos en{' '}
+                        <a href="/configuracion#tipoDepartamento">Configuración</a> y después registre los departamentos.
+                    </Nota>
+                </div>
+            )}
 
             {!crud.cargando && activos.length > 0 && disponibles.length === 0 && (
                 <div className="mb-3">

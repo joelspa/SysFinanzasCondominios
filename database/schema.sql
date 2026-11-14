@@ -1,5 +1,5 @@
 -- database/schema.sql
--- Sistema de Gestión de Finanzas para Condominios (un solo condominio)
+-- Sistema de Gestión de Finanzas para Condominios (varios condominios, cada uno con sus departamentos)
 -- Ejecutar en la base de datos desaweb2: todas las tablas se crean en el esquema final
 
 CREATE SCHEMA IF NOT EXISTS final;
@@ -16,11 +16,14 @@ CREATE TABLE condominio (
                     CHECK (dia_vencimiento BETWEEN 1 AND 28)   -- día del mes en que vencen las expensas
 );
 
+-- Cada condominio define sus tipos de departamento y la cuota mensual (expensa) de cada uno
 CREATE TABLE tipo_departamento (
     id_tipo_departamento INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre               VARCHAR(60) NOT NULL UNIQUE,
+    id_condominio        INT NOT NULL REFERENCES condominio(id_condominio),
+    nombre               VARCHAR(60) NOT NULL,
     descripcion          VARCHAR(200),
-    cuota_mensual        DECIMAL(18,2) NOT NULL CHECK (cuota_mensual >= 0)
+    cuota_mensual        DECIMAL(18,2) NOT NULL CHECK (cuota_mensual >= 0),
+    UNIQUE (id_condominio, nombre)                 -- el nombre se puede repetir en otro condominio
 );
 
 CREATE TABLE departamento (
@@ -81,6 +84,13 @@ CREATE TABLE sesion (
 );
 CREATE INDEX idx_sesion_expire ON sesion (expire);
 
+-- Condominios que puede ver cada tesorero (el administrador ve todos y no necesita filas aquí)
+CREATE TABLE usuario_condominio (
+    id_usuario    INT NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_condominio INT NOT NULL REFERENCES condominio(id_condominio) ON DELETE CASCADE,
+    PRIMARY KEY (id_usuario, id_condominio)
+);
+
 -- Cargos: lo que debe cada departamento (expensas, multas, cuotas extraordinarias).
 -- El estado (pendiente, parcial, pagado, vencido) no se guarda: se calcula en v_cargo.
 CREATE TABLE cargo (
@@ -96,9 +106,11 @@ CREATE TABLE cargo (
 
 -- Ingresos: el dinero que entra. Si aplica_deuda, se reparte entre los cargos del departamento
 -- (del más antiguo al más nuevo) y lo que sobra queda como saldo a favor.
+-- Sin departamento es un ingreso del condominio (alquiler del salón a un tercero, intereses del banco).
 CREATE TABLE ingreso (
     id_ingreso       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_departamento  INT NOT NULL REFERENCES departamento(id_departamento),
+    id_condominio    INT NOT NULL REFERENCES condominio(id_condominio),
+    id_departamento  INT REFERENCES departamento(id_departamento),
     id_tipo_ingreso  INT NOT NULL REFERENCES tipo_ingreso(id_tipo_ingreso),
     id_usuario       INT NOT NULL REFERENCES usuario(id_usuario),
     concepto         VARCHAR(180) NOT NULL,
@@ -108,7 +120,8 @@ CREATE TABLE ingreso (
     estado           VARCHAR(15) NOT NULL DEFAULT 'registrado'
                      CHECK (estado IN ('registrado', 'anulado')),
     aplica_deuda     BOOLEAN NOT NULL DEFAULT TRUE,   -- false: no paga deudas (ej. alquiler del salón)
-    motivo_anulacion VARCHAR(200)
+    motivo_anulacion VARCHAR(200),
+    CONSTRAINT ingreso_sin_departamento_check CHECK (id_departamento IS NOT NULL OR aplica_deuda = FALSE)
 );
 
 -- Aplicación de pagos: un pago puede cubrir varios cargos y un cargo puede pagarse en varias partes
@@ -209,11 +222,11 @@ INSERT INTO tipo_ingreso (nombre, descripcion) VALUES
     ('Alquiler de área común', 'Salón de eventos, churrasquera, piscina, cancha'),
     ('Alquiler de parqueo', 'Parqueo o depósito adicional');
 
-INSERT INTO tipo_departamento (nombre, descripcion, cuota_mensual) VALUES
-    ('Básico', '1 dormitorio', 350.00),
-    ('Clásico', '2 dormitorios', 500.00),
-    ('Suite', '1 suite con baño privado', 700.00),
-    ('Suite doble', '2 suites con baño privado', 950.00);
+INSERT INTO tipo_departamento (id_condominio, nombre, descripcion, cuota_mensual) VALUES
+    (1, 'Básico', '1 dormitorio', 350.00),
+    (1, 'Clásico', '2 dormitorios', 500.00),
+    (1, 'Suite', '1 suite con baño privado', 700.00),
+    (1, 'Suite doble', '2 suites con baño privado', 950.00);
 
 INSERT INTO tipo_egreso (nombre, descripcion) VALUES
     ('Servicios', 'Luz, agua e internet de áreas comunes'),

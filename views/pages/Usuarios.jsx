@@ -19,10 +19,16 @@ import Casilla from '../components/Casilla';
 import Nota from '../components/Nota';
 import EntradaContrasena from '../components/EntradaContrasena';
 
-const usuarioNuevo = { id_usuario: 0, nombre: '', correo: '', rol: 'tesorero', activo: true, contrasena: '', confirmacion: '' };
+const usuarioNuevo = { id_usuario: 0, nombre: '', correo: '', rol: 'tesorero', activo: true, contrasena: '', confirmacion: '', condominios: [] };
+
+// Agrega o quita un valor de una lista (para las casillas de los condominios)
+function alternar(lista, valor, incluir) {
+    return incluir ? [...lista, valor] : lista.filter((v) => v !== valor);
+}
 
 // Usuarios del sistema (quienes registran pagos y gastos). El inicio de sesión usa estos datos.
-export default function Usuarios() {
+//   usuario: el administrador que tiene la sesión abierta (trae todos los condominios)
+export default function Usuarios({ usuario: sesion }) {
     const crud = useCrud({
         rutas: { obtener: '/api/usuario/obtenerUsuarios', guardar: '/api/usuario/guardarUsuario', eliminar: '/api/usuario/eliminarUsuario' },
         id: 'id_usuario', nombre: 'El usuario', inicial: []
@@ -48,7 +54,19 @@ export default function Usuarios() {
         if (formulario.contrasena !== formulario.confirmacion) {
             return 'Las contraseñas no coinciden';
         }
+        if (formulario.rol === 'tesorero' && formulario.condominios.length === 0) {
+            return 'Seleccione al menos un condominio para el tesorero';
+        }
         return null;
+    }
+
+    // 'Todos los condominios' para el administrador; para el tesorero, los nombres de los suyos
+    function textoCondominios(usuario) {
+        if (usuario.rol === 'admin') {
+            return 'Todos los condominios';
+        }
+        let nombres = sesion.condominios.filter((c) => usuario.condominios.includes(c.id_condominio)).map((c) => c.nombre);
+        return nombres.length > 0 ? nombres.join(', ') : 'Sin condominios asignados';
     }
 
     async function guardar() {
@@ -64,7 +82,7 @@ export default function Usuarios() {
     return (
         <>
             <Encabezado titulo="Usuarios" descripcion="Personas que usan el sistema y registran los movimientos del condominio."
-                textoBoton="Nuevo usuario" onAdicionar={() => abrir(usuarioNuevo)} />
+                textoBoton="Nuevo usuario" onAdicionar={() => abrir({ ...usuarioNuevo, condominios: [sesion.id_condominio] })} />
             <Alerta mensaje={crud.mensaje} onCerrar={crud.cerrarMensaje} />
 
             <Resumen items={[
@@ -99,7 +117,10 @@ export default function Usuarios() {
                                     </div>
                                 </div>
                             </td>
-                            <td>{textoRol(usuario.rol)}</td>
+                            <td>
+                                {textoRol(usuario.rol)}
+                                <span className="secundario">{textoCondominios(usuario)}</span>
+                            </td>
                             <td className="text-end numero">{usuario.movimientos}</td>
                             <td><Estado valor={usuario.activo ? 'activo' : 'inactivo'} /></td>
                             {/* Quien registró movimientos no se elimina (historial): solo se desactiva */}
@@ -112,7 +133,7 @@ export default function Usuarios() {
 
             {formulario && (
                 <Modal titulo={formulario.id_usuario == 0 ? 'Nuevo usuario' : 'Editar usuario'}
-                    descripcion="Los permisos de cada rol se aplicarán cuando se active el inicio de sesión."
+                    descripcion="El administrador ve todos los condominios; el tesorero, solo los que se le asignen."
                     error={crud.error} onCerrar={crud.cerrarFormulario} onAceptar={guardar}>
                     <div className="row g-3">
                         <Campo etiqueta="Nombre completo" requerido>
@@ -132,6 +153,18 @@ export default function Usuarios() {
                             <Casilla etiqueta="Usuario activo" descripcion="Si se desactiva, no podrá iniciar sesión."
                                 marcado={formulario.activo} onCambiar={(valor) => crud.actualizarFormulario({ activo: valor })} />
                         </div>
+                        {formulario.rol === 'tesorero' && (
+                            <div className="col-12">
+                                <span className="form-label requerido d-block">Condominios que puede ver</span>
+                                {sesion.condominios.map((condominio) => (
+                                    <Casilla key={condominio.id_condominio} etiqueta={condominio.nombre}
+                                        marcado={formulario.condominios.includes(condominio.id_condominio)}
+                                        onCambiar={(marcado) => crud.actualizarFormulario({
+                                            condominios: alternar(formulario.condominios, condominio.id_condominio, marcado)
+                                        })} />
+                                ))}
+                            </div>
+                        )}
                         {formulario.id_usuario != 0 && (
                             <div className="col-12">
                                 <Nota tono="info">Deje la contraseña vacía para mantener la actual.</Nota>

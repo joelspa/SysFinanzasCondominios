@@ -4,6 +4,7 @@ import { RUTAS_ADMIN } from './opciones';
 import Menu from './components/Menu';
 import Login from './pages/Login';
 import Inicio from './pages/Inicio';
+import Condominios from './pages/Condominios';
 import Personas from './pages/Personas';
 import Departamentos from './pages/Departamentos';
 import FichaDepartamento from './pages/FichaDepartamento';
@@ -19,6 +20,7 @@ import Usuarios from './pages/Usuarios';
 // Express entrega esta misma app en cada ruta (routers/indexRouter.js); aquí se elige qué página mostrar
 const paginas = {
     '/': Inicio,
+    '/condominio': Condominios,
     '/persona': Personas,
     '/departamento': Departamentos,
     '/departamento/ficha': FichaDepartamento,
@@ -48,6 +50,7 @@ async function iniciar() {
         return;
     }
 
+    // usuario: { nombre, correo, rol, condominios: los que puede usar, id_condominio: en el que está trabajando }
     let usuario = sesion.Data;
     let permitida = usuario.rol === 'admin' || !RUTAS_ADMIN.includes(ruta);
     let Pagina = (permitida && paginas[ruta]) || Inicio;

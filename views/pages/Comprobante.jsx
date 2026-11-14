@@ -20,10 +20,11 @@ export default function Comprobante() {
         <DocumentoComprobante tipo="Comprobante de pago" numero={ingreso.id_ingreso} condominio={condominio}
             volver={{ href: '/ingreso', texto: 'Ingresos' }} motivoAnulacion={ingreso.motivo_anulacion}
             firmas={['Recibí conforme', 'Entregué conforme']}>
+            {/* Un ingreso sin departamento es del condominio: no tiene propietario ni cuenta que mostrar */}
             <DatosComprobante datos={[
                 { etiqueta: 'Fecha de pago', valor: formatoFecha(ingreso.fecha) },
-                { etiqueta: 'Departamento', valor: ingreso.departamento },
-                { etiqueta: 'Propietario', valor: ingreso.propietario || 'Sin registrar' },
+                { etiqueta: 'Departamento', valor: ingreso.departamento || 'Ingreso del condominio' },
+                { etiqueta: 'Propietario', valor: ingreso.departamento ? (ingreso.propietario || 'Sin registrar') : '—' },
                 { etiqueta: 'Método de pago', valor: capitalizar(ingreso.metodo_pago) },
                 { etiqueta: 'Tipo de ingreso', valor: ingreso.tipo_ingreso },
                 { etiqueta: 'Registrado por', valor: ingreso.usuario }
@@ -57,7 +58,7 @@ export default function Comprobante() {
                 <div className="comprobante-total"><span>Total recibido</span><span className="numero">{dinero(ingreso.monto)}</span></div>
             </div>
 
-            {ingreso.estado === 'registrado' && (
+            {ingreso.estado === 'registrado' && ingreso.departamento && (
                 <p className="comprobante-pie">
                     Saldo del departamento a la fecha: deuda {dinero(ingreso.deuda)} · a favor {dinero(ingreso.saldo_favor)}
                 </p>
