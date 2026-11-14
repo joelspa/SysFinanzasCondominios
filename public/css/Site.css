@@ -1959,9 +1959,124 @@ a.enlace-etiqueta:hover {
     padding-right: 2.75rem;
 }
 
+/* Edge agrega su propio botón para ver la contraseña: se oculta para no mostrar dos */
+.entrada-contrasena .form-control::-ms-reveal {
+    display: none;
+}
+
 .entrada-contrasena .boton-icono {
     position: absolute;
     top: 50%;
     right: 0.3rem;
     transform: translateY(-50%);
+}
+
+/* ===== Usuario de la sesión (pie del menú) ===== */
+.menu-usuario {
+    gap: 0.5rem;
+}
+
+.menu-usuario-datos {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-usuario-datos strong,
+.menu-usuario-datos small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.menu-usuario .boton-icono {
+    color: var(--menu-texto);
+}
+
+.menu-usuario .boton-icono:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* ===== Pantalla de ingreso ===== */
+.ingreso {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(320px, 2fr) 3fr;
+}
+
+.ingreso-marca {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem;
+    background: var(--menu);
+    color: var(--menu-texto);
+}
+
+.ingreso-marca h1 {
+    margin: 0.5rem 0 0;
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.ingreso-marca p {
+    max-width: 34ch;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.ingreso-contenido {
+    display: grid;
+    place-items: center;
+    padding: 2rem 1.25rem;
+}
+
+.ingreso-formulario {
+    width: 100%;
+    max-width: 380px;
+}
+
+.ingreso-formulario h2 {
+    margin-bottom: 0.25rem;
+    font-size: 1.4rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+}
+
+.ingreso-formulario > .secundario {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+/* En celular la franja azul queda arriba, solo con el logo y el nombre */
+@media (max-width: 767.98px) {
+    .ingreso {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+
+    .ingreso-marca {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 1.25rem;
+    }
+
+    .ingreso-marca h1 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .ingreso-marca p {
+        display: none;
+    }
+
+    .ingreso-contenido {
+        place-items: start center;
+        padding-top: 2.5rem;
+    }
 }

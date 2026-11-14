@@ -33,7 +33,7 @@ function ultimosMovimientos(ingresos, egresos, cantidad) {
 }
 
 // Panel principal: indicadores calculados con los datos de cargos, ingresos, gastos y departamentos
-export default function Inicio() {
+export default function Inicio({ usuario }) {
     const cargos = useDatos('/api/cargo/obtenerCargos', { Cargos: [], Departamentos: [] });
     const ingresos = useDatos('/api/ingreso/obtenerIngresos', { Ingresos: [], Departamentos: [], Tipos: [], Pendientes: [] });
     const egresos = useDatos('/api/egreso/obtenerEgresos', { Egresos: [], Tipos: [], Caja: {} });
@@ -98,7 +98,7 @@ export default function Inicio() {
         <>
             <div className="encabezado">
                 <div>
-                    <h1>{saludo()}, Administrador</h1>
+                    <h1>{saludo()}, {usuario.nombre.split(' ')[0]}</h1>
                     <p>Resumen financiero del condominio al {formatoFecha(hoy())}.</p>
                 </div>
                 <div className="encabezado-acciones">

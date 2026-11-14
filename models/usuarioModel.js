@@ -28,6 +28,21 @@ class usuarioModel {
         return objDao.consultar(SQL_USUARIOS + 'ORDER BY u.activo DESC, u.nombre');
     }
 
+    // Para el inicio de sesión: es la única consulta que lee password_hash (se compara en el servidor)
+    ObtenerPorCorreo(correo) {
+        let sql = 'SELECT id_usuario, nombre, correo, rol, activo, password_hash FROM usuario WHERE LOWER(correo) = LOWER($1)';
+        return objDao.obtenerUno(sql, [correo]);
+    }
+
+    // Usuario de una sesión abierta; devuelve null si ya no existe o lo desactivaron
+    ObtenerActivo(idUsuario) {
+        return objDao.obtenerUno('SELECT id_usuario, nombre, correo, rol FROM usuario WHERE id_usuario = $1 AND activo', [idUsuario]);
+    }
+
+    async CambiarContrasena(idUsuario, contrasena) {
+        return objDao.ejecutar('UPDATE usuario SET password_hash = $1 WHERE id_usuario = $2', [await cifrar(contrasena), idUsuario]);
+    }
+
     async GuardarUsuario(data) {
         let sql = 'INSERT INTO usuario (nombre, correo, password_hash, rol, activo) VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario';
         let params = [data.nombre, data.correo, await cifrar(data.contrasena), data.rol, data.activo];

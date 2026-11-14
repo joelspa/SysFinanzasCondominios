@@ -24,7 +24,8 @@ module.exports = {
         if (meses > 0 && !data.aplica_deuda) {
             return rechazar(res, 'Para adelantar meses el pago debe aplicarse a la deuda del departamento');
         }
-        responder(res, objIngresoModel.GuardarIngreso({ ...data, meses_adelantados: meses }).then((nuevo) => nuevo.id_ingreso));
+        let nuevo = { ...data, meses_adelantados: meses, id_usuario: req.usuario.id_usuario };
+        responder(res, objIngresoModel.GuardarIngreso(nuevo).then((ingreso) => ingreso.id_ingreso));
     },
     anularIngreso: (req, res) => {
         let motivo = leerMotivo(req.body);

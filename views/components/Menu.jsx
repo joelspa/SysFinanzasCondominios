@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import Icono from './Icono';
+import Alerta from './Alerta';
+import ModalContrasena from '../secciones/ModalContrasena';
 import useDatos from '../hooks/useDatos';
-import { fechaLarga } from '../formato';
+import { enviar } from '../api';
+import { fechaLarga, iniciales } from '../formato';
+import { RUTAS_ADMIN, textoRol } from '../opciones';
 
 const grupos = [
     { titulo: 'General', opciones: [{ ruta: '/', texto: 'Panel principal', icono: 'inicio' }] },
@@ -38,12 +42,36 @@ function perteneceA(ruta, opcion) {
     return ruta === opcion.ruta || (opcion.ruta !== '/' && ruta.startsWith(opcion.ruta + '/'));
 }
 
+// Grupos del menú que puede ver el usuario: las páginas de RUTAS_ADMIN son solo del administrador
+function gruposPara(usuario) {
+    return grupos
+        .map((grupo) => ({
+            ...grupo, opciones: grupo.opciones.filter((o) => usuario.rol === 'admin' || !RUTAS_ADMIN.includes(o.ruta))
+        }))
+        .filter((grupo) => grupo.opciones.length > 0);
+}
+
 // Menú lateral y barra superior (en celular el menú se abre con el botón de la barra)
-export default function Menu({ ruta }) {
+//   usuario: quien tiene la sesión abierta { nombre, correo, rol }
+export default function Menu({ ruta, usuario }) {
     const [abierto, setAbierto] = useState(false);
+    const [cambiandoContrasena, setCambiandoContrasena] = useState(false);
+    const [mensaje, setMensaje] = useState(null);
     const condominio = useDatos('/api/condominio/obtenerCondominio', null);
-    let actual = grupos.flatMap((grupo) => grupo.opciones).find((opcion) => perteneceA(ruta, opcion));
+
+    const visibles = gruposPara(usuario);
+    let actual = visibles.flatMap((grupo) => grupo.opciones).find((opcion) => perteneceA(ruta, opcion));
     let nombre = condominio.datos ? condominio.datos.nombre : 'Finanzas Condominio';
+
+    async function cerrarSesion() {
+        await enviar('/api/sesion/cerrarSesion', {});
+        window.location.href = '/login';
+    }
+
+    function contrasenaCambiada() {
+        setCambiandoContrasena(false);
+        setMensaje({ tipo: 'success', texto: 'Su contraseña se cambió correctamente' });
+    }
 
     return (
         <>
@@ -56,7 +84,7 @@ export default function Menu({ ruta }) {
                     </span>
                 </a>
                 <nav className="menu-navegacion">
-                    {grupos.map((grupo) => (
+                    {visibles.map((grupo) => (
                         <div key={grupo.titulo}>
                             <div className="menu-grupo">{grupo.titulo}</div>
                             {grupo.opciones.map((opcion) => (
@@ -70,11 +98,18 @@ export default function Menu({ ruta }) {
                     ))}
                 </nav>
                 <div className="menu-usuario">
-                    <span className="avatar">AD</span>
-                    <span>
-                        <strong>Administrador</strong>
-                        <small>admin@condominio.com</small>
+                    <span className="avatar">{iniciales(usuario.nombre)}</span>
+                    <span className="menu-usuario-datos" title={usuario.correo}>
+                        <strong>{usuario.nombre}</strong>
+                        <small>{textoRol(usuario.rol)}</small>
                     </span>
+                    <button type="button" className="boton-icono" title="Cambiar mi contraseña" aria-label="Cambiar mi contraseña"
+                        onClick={() => setCambiandoContrasena(true)}>
+                        <Icono nombre="llave" tamano={17} />
+                    </button>
+                    <button type="button" className="boton-icono" title="Cerrar sesión" aria-label="Cerrar sesión" onClick={cerrarSesion}>
+                        <Icono nombre="salir" tamano={17} />
+                    </button>
                 </div>
             </aside>
             <div className={'menu-fondo' + (abierto ? ' visible' : '')} onClick={() => setAbierto(false)}></div>
@@ -85,7 +120,7 @@ export default function Menu({ ruta }) {
                 </button>
                 <div className="barra-ruta">
                     {nombre} <span className="mx-1">/</span>
-                    {subpaginas[ruta] ? (
+                    {subpaginas[ruta] && actual ? (
                         <><a href={actual.ruta}>{actual.texto}</a> <span className="mx-1">/</span> <strong>{subpaginas[ruta]}</strong></>
                     ) : (
                         <strong>{actual ? actual.texto : 'Panel principal'}</strong>
@@ -96,6 +131,11 @@ export default function Menu({ ruta }) {
                     {fechaLarga()}
                 </div>
             </header>
+
+            <Alerta mensaje={mensaje} onCerrar={() => setMensaje(null)} />
+            {cambiandoContrasena && (
+                <ModalContrasena onCerrar={() => setCambiandoContrasena(false)} onCambiada={contrasenaCambiada} />
+            )}
         </>
     );
 }

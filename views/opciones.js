@@ -50,4 +50,12 @@ export const ROLES = [
     { valor: 'tesorero', texto: 'Tesorero', descripcion: 'Registra pagos, gastos y cargos.' }
 ];
 
+// 'tesorero' -> 'Tesorero'
+export function textoRol(rol) {
+    return (ROLES.find((r) => r.valor === rol) || { texto: rol }).texto;
+}
+
+// Páginas que solo ve el administrador (el servidor también lo exige: middlewares/sesion.js)
+export const RUTAS_ADMIN = ['/configuracion', '/usuario'];
+
 export const LARGO_MINIMO_CONTRASENA = 8;   // igual que utils/contrasena.js

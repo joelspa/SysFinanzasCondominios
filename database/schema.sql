@@ -72,6 +72,15 @@ CREATE TABLE usuario (
     activo        BOOLEAN NOT NULL DEFAULT TRUE   -- false: no puede iniciar sesión
 );
 
+-- Sesiones abiertas. Se guardan en la base para que no se pierdan al reiniciar el servidor.
+-- Los nombres de las columnas los define la librería connect-pg-simple.
+CREATE TABLE sesion (
+    sid    VARCHAR PRIMARY KEY,
+    sess   JSON NOT NULL,
+    expire TIMESTAMP(6) NOT NULL
+);
+CREATE INDEX idx_sesion_expire ON sesion (expire);
+
 -- Cargos: lo que debe cada departamento (expensas, multas, cuotas extraordinarias).
 -- El estado (pendiente, parcial, pagado, vencido) no se guarda: se calcula en v_cargo.
 CREATE TABLE cargo (
@@ -121,6 +130,7 @@ CREATE TABLE traspaso (
     fecha                   DATE NOT NULL DEFAULT CURRENT_DATE,
     deuda_pendiente         DECIMAL(18,2) NOT NULL DEFAULT 0,        -- deuda que asumió el nuevo propietario
     observacion             VARCHAR(250),
+    id_usuario              INT REFERENCES usuario(id_usuario),      -- quién lo registró
     CHECK (id_propietario_anterior IS NULL OR id_propietario_anterior <> id_propietario_nuevo)
 );
 
@@ -228,7 +238,8 @@ INSERT INTO residente (id_departamento, id_persona, tipo_relacion, fecha_inicio)
     (2, 2, 'propietario', '2024-06-01'),
     (2, 3, 'inquilino', '2026-03-01');
 
--- Usuario que registra los ingresos (la contraseña se definirá cuando se implemente el login)
+-- Administrador inicial. Todavía no puede ingresar: asígnele una contraseña con
+--   npm run admin -- admin@condominio.com SuContraseña
 INSERT INTO usuario (nombre, correo, password_hash, rol) VALUES
     ('Administrador', 'admin@condominio.com', 'pendiente-login', 'admin');
 

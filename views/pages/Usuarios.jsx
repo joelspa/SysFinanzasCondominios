@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
 import { coincide, iniciales } from '../formato';
-import { ROLES, LARGO_MINIMO_CONTRASENA } from '../opciones';
+import { ROLES, LARGO_MINIMO_CONTRASENA, textoRol } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
 import Resumen from '../components/Resumen';
@@ -20,7 +20,6 @@ import Nota from '../components/Nota';
 import EntradaContrasena from '../components/EntradaContrasena';
 
 const usuarioNuevo = { id_usuario: 0, nombre: '', correo: '', rol: 'tesorero', activo: true, contrasena: '', confirmacion: '' };
-const textoRol = (rol) => (ROLES.find((r) => r.valor === rol) || { texto: rol }).texto;
 
 // Usuarios del sistema (quienes registran pagos y gastos). El inicio de sesión usa estos datos.
 export default function Usuarios() {

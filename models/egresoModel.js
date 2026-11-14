@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { ID_CONDOMINIO, ID_USUARIO } = require('../config/config');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
 
 const SQL_EGRESOS = 'SELECT e.id_egreso, e.id_tipo_egreso, t.nombre AS tipo_egreso, e.concepto, e.proveedor, e.numero_documento, '
@@ -44,7 +44,7 @@ class egresoModel {
     GuardarEgreso(data) {
         let sql = 'INSERT INTO egreso (id_condominio, id_usuario, id_tipo_egreso, concepto, proveedor, numero_documento, '
             + 'monto, fecha, metodo_pago, observacion) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_egreso';
-        let params = [ID_CONDOMINIO, ID_USUARIO, data.id_tipo_egreso, data.concepto, data.proveedor, data.numero_documento,
+        let params = [ID_CONDOMINIO, data.id_usuario, data.id_tipo_egreso, data.concepto, data.proveedor, data.numero_documento,
             data.monto, data.fecha, data.metodo_pago, data.observacion];
         return objDao.insertar(sql, params);
     }

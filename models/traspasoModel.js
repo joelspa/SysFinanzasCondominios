@@ -63,10 +63,10 @@ class traspasoModel {
                 + '(SELECT id_cargo FROM v_cargo WHERE id_departamento = $1 AND saldo > 0)',
                 [data.id_departamento, data.id_propietario_nuevo]);
 
-            let sql = 'INSERT INTO traspaso (id_departamento, id_propietario_anterior, id_propietario_nuevo, fecha, deuda_pendiente, observacion) '
-                + 'VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_traspaso';
+            let sql = 'INSERT INTO traspaso (id_departamento, id_propietario_anterior, id_propietario_nuevo, fecha, deuda_pendiente, '
+                + 'observacion, id_usuario) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_traspaso';
             return t.one(sql, [data.id_departamento, anteriores.length > 0 ? anteriores[0].id_persona : null,
-                data.id_propietario_nuevo, data.fecha, deuda, data.observacion]);
+                data.id_propietario_nuevo, data.fecha, deuda, data.observacion, data.id_usuario]);
         });
     }
 }

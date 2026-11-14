@@ -14,7 +14,8 @@ module.exports = {
     guardarEgreso: (req, res) => {
         let data = { id_egreso: req.body.id_egreso, ...leerCampos(req.body, CAMPOS) };
         if (data.id_egreso == 0) {
-            responder(res, objEgresoModel.GuardarEgreso(data).then((nuevo) => nuevo.id_egreso));
+            let nuevo = { ...data, id_usuario: req.usuario.id_usuario };
+            responder(res, objEgresoModel.GuardarEgreso(nuevo).then((egreso) => egreso.id_egreso));
         } else {
             responder(res, objEgresoModel.ActualizarEgreso(data));
         }

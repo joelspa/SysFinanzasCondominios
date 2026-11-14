@@ -1,5 +1,8 @@
 import { createRoot } from 'react-dom/client';
+import { obtener } from './api';
+import { RUTAS_ADMIN } from './opciones';
 import Menu from './components/Menu';
+import Login from './pages/Login';
 import Inicio from './pages/Inicio';
 import Personas from './pages/Personas';
 import Departamentos from './pages/Departamentos';
@@ -30,13 +33,33 @@ const paginas = {
 };
 
 const ruta = window.location.pathname.replace(/\/$/, '') || '/';
-const Pagina = paginas[ruta] || Inicio;
+const raiz = createRoot(document.getElementById('root'));
 
-createRoot(document.getElementById('root')).render(
-    <div className="app">
-        <Menu ruta={ruta} />
-        <main className="app-principal">
-            <Pagina />
-        </main>
-    </div>
-);
+// Antes de dibujar se pregunta al servidor quién ingresó. Sin sesión solo se muestra la pantalla de ingreso
+// (api.js ya llevó el navegador a /login si estaba en otra página).
+async function iniciar() {
+    let sesion = await obtener('/api/sesion/obtenerSesion');
+    if (!sesion.Success) {
+        raiz.render(<Login />);
+        return;
+    }
+    if (ruta === '/login') {
+        window.location.replace('/');
+        return;
+    }
+
+    let usuario = sesion.Data;
+    let permitida = usuario.rol === 'admin' || !RUTAS_ADMIN.includes(ruta);
+    let Pagina = (permitida && paginas[ruta]) || Inicio;
+
+    raiz.render(
+        <div className="app">
+            <Menu ruta={ruta} usuario={usuario} />
+            <main className="app-principal">
+                <Pagina usuario={usuario} />
+            </main>
+        </div>
+    );
+}
+
+iniciar();

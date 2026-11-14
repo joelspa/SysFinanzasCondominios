@@ -1,7 +1,7 @@
 const dao = require('./dao');
 const { reaplicar } = require('../services/aplicarPagos');
 const { adelantarExpensas } = require('../services/expensas');
-const { ID_CONDOMINIO, ID_USUARIO, CONCEPTO_EXPENSAS } = require('../config/config');
+const { ID_CONDOMINIO, CONCEPTO_EXPENSAS } = require('../config/config');
 const objDao = new dao();
 
 // Cargos que cubre cada pago, como lista JSON: [{ id_cargo, concepto, periodo, monto, total }]
@@ -53,11 +53,12 @@ class ingresoModel {
         return { Ingreso: { ...ingreso, ...extra }, Condominio: condominio };
     }
 
-    // Transacción: registra el pago, emite las expensas adelantadas que pidió y reparte el dinero
+    // Transacción: registra el pago (a nombre del usuario que lo cobró), emite las expensas
+    // adelantadas que pidió y reparte el dinero
     GuardarIngreso(data) {
         let sql = 'INSERT INTO ingreso (id_departamento, id_tipo_ingreso, id_usuario, concepto, monto, fecha, metodo_pago, aplica_deuda) '
             + 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id_ingreso';
-        let params = [data.id_departamento, data.id_tipo_ingreso, ID_USUARIO, data.concepto,
+        let params = [data.id_departamento, data.id_tipo_ingreso, data.id_usuario, data.concepto,
             data.monto, data.fecha, data.metodo_pago, data.aplica_deuda];
         return objDao.transaccion(async function (t) {
             let nuevo = await t.one(sql, params);
