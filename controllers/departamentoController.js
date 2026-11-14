@@ -1,50 +1,25 @@
 const departamentoModel = require('../models/departamentoModel');
-const mensajeError = require('./mensajeError');
+const { responder, leerCampos } = require('./respuesta');
 const objDepartamentoModel = new departamentoModel();
+
+const CAMPOS = ['numero', 'piso', 'estado', 'id_tipo_departamento', 'metros_cuadrados'];
 
 module.exports = {
     obtenerDepartamentos: (req, res) => {
-        objDepartamentoModel.ObtenerDepartamentos().then(function (data) {
-            res.type('json');
-            res.send({ "Success": true, "Data": data });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objDepartamentoModel.ObtenerDepartamentos());
+    },
+    obtenerFicha: (req, res) => {
+        responder(res, objDepartamentoModel.ObtenerFicha(req.query.id_departamento));
     },
     guardarDepartamento: (req, res) => {
-        var data = {
-            id_departamento: req.body.id_departamento, numero: req.body.numero || null,
-            piso: req.body.piso || null, estado: req.body.estado || null,
-            id_tipo_departamento: req.body.id_tipo_departamento || null,
-            metros_cuadrados: req.body.metros_cuadrados || null
-        };
+        let data = { id_departamento: req.body.id_departamento, ...leerCampos(req.body, CAMPOS) };
         if (data.id_departamento == 0) {
-            objDepartamentoModel.GuardarDepartamento(data).then(data => {
-                res.type('json');
-                res.send({ "Success": true, "Data": data.id_departamento });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objDepartamentoModel.GuardarDepartamento(data).then((nuevo) => nuevo.id_departamento));
         } else {
-            objDepartamentoModel.ActualizarDepartamento(data).then(function () {
-                res.type('json');
-                res.send({ "Success": true });
-            }).catch(function (error) {
-                res.type('json');
-                res.send({ "Success": false, "Mensaje": mensajeError(error) });
-            });
+            responder(res, objDepartamentoModel.ActualizarDepartamento(data));
         }
     },
     eliminarDepartamento: (req, res) => {
-        var data = { id_departamento: req.body.id_departamento };
-        objDepartamentoModel.EliminarDepartamento(data).then(function () {
-            res.type('json');
-            res.send({ "Success": true });
-        }).catch(function (error) {
-            res.type('json');
-            res.send({ "Success": false, "Mensaje": mensajeError(error) });
-        });
+        responder(res, objDepartamentoModel.EliminarDepartamento({ id_departamento: req.body.id_departamento }));
     }
-}
+};

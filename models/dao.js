@@ -1,10 +1,15 @@
-const db = require('./db');
+const db = require('../config/db');
 
 // Acceso a datos: todos los modelos ejecutan sus consultas a través de esta clase
 class dao {
     constructor() { }
     async consultar(sql, params = []) {
         let data = await db.any(sql, params);
+        return data;
+    }
+    // Devuelve un solo registro o null si no existe
+    async obtenerUno(sql, params = []) {
+        let data = await db.oneOrNone(sql, params);
         return data;
     }
     async insertar(sql, params = []) {

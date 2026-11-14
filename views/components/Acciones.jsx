@@ -1,15 +1,13 @@
-import Icono from './Icono';
+import BotonIcono from './BotonIcono';
 
-// Botones de editar y eliminar de cada fila de la tabla
-export default function Acciones({ onEditar, onEliminar }) {
+// Celda con los botones de cada fila de la tabla.
+// children: botones adicionales (ej. ver ficha) que van antes de editar y eliminar
+export default function Acciones({ onEditar, onEliminar, tituloEliminar = 'Eliminar', iconoEliminar = 'eliminar', children }) {
     return (
         <td className="text-end text-nowrap">
-            <button type="button" className="boton-icono" title="Editar" aria-label="Editar" onClick={onEditar}>
-                <Icono nombre="editar" tamano={17} />
-            </button>
-            <button type="button" className="boton-icono peligro" title="Eliminar" aria-label="Eliminar" onClick={onEliminar}>
-                <Icono nombre="eliminar" tamano={17} />
-            </button>
+            {children}
+            {onEditar && <BotonIcono icono="editar" titulo="Editar" onClick={onEditar} />}
+            {onEliminar && <BotonIcono icono={iconoEliminar} titulo={tituloEliminar} peligro onClick={onEliminar} />}
         </td>
     );
 }

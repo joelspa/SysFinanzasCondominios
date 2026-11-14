@@ -1,24 +1,58 @@
 const dao = require('./dao');
+const traspasoModel = require('./traspasoModel');
+const { ID_CONDOMINIO } = require('../config/config');
 const objDao = new dao();
+const objTraspasoModel = new traspasoModel();
 
-// Un solo condominio por instalación
-const ID_CONDOMINIO = 1;
+// con_historial: tiene residentes, cargos, pagos o traspasos registrados (no se puede eliminar)
+const SQL_HISTORIAL = 'EXISTS (SELECT 1 FROM residente r WHERE r.id_departamento = v.id_departamento) '
+    + 'OR EXISTS (SELECT 1 FROM cargo c WHERE c.id_departamento = v.id_departamento) '
+    + 'OR EXISTS (SELECT 1 FROM ingreso i WHERE i.id_departamento = v.id_departamento) '
+    + 'OR EXISTS (SELECT 1 FROM traspaso tr WHERE tr.id_departamento = v.id_departamento)';
+
+const SQL_DEPARTAMENTOS = 'SELECT id_departamento, numero, piso, estado, id_tipo_departamento, metros_cuadrados, '
+    + 'tipo_departamento, cuota_mensual, id_propietario, propietario, residentes_activos, deuda, saldo_favor, '
+    + '(' + SQL_HISTORIAL + ') AS con_historial FROM v_departamento v ';
 
 class departamentoModel {
     constructor() { }
 
-    // Devuelve los departamentos y los tipos para llenar el combo
+    // Devuelve los departamentos (con ocupación, propietario y deuda) y los tipos para llenar el combo
     ObtenerDepartamentos() {
-        let sqlDepartamentos = 'SELECT d.*, t.nombre AS tipo_departamento FROM departamento d '
-            + 'JOIN tipo_departamento t ON d.id_tipo_departamento = t.id_tipo_departamento '
-            + 'WHERE d.id_condominio = $1 ORDER BY d.id_departamento';
         let sqlTipos = 'SELECT * FROM tipo_departamento ORDER BY id_tipo_departamento';
         return Promise.all([
-            objDao.consultar(sqlDepartamentos, [ID_CONDOMINIO]),
+            objDao.consultar(SQL_DEPARTAMENTOS + 'WHERE id_condominio = $1 ORDER BY numero', [ID_CONDOMINIO]),
             objDao.consultar(sqlTipos)
         ]).then(function (data) {
             return { Departamentos: data[0], Tipos: data[1] };
         });
+    }
+
+    // Ficha del departamento: estado de cuenta, pagos, residentes e historial de propietarios
+    async ObtenerFicha(idDepartamento) {
+        let departamento = await objDao.obtenerUno(SQL_DEPARTAMENTOS + 'WHERE id_departamento = $1', [idDepartamento]);
+        if (!departamento) {
+            throw new Error('El departamento no existe');
+        }
+        let sqlCargos = "SELECT c.id_cargo, c.concepto, TO_CHAR(c.periodo, 'YYYY-MM') AS periodo, "
+            + "TO_CHAR(c.vencimiento, 'YYYY-MM-DD') AS vencimiento, c.monto, c.pagado, c.saldo, c.estado, "
+            + 'c.id_responsable, p.nombre AS responsable FROM v_cargo c LEFT JOIN persona p ON p.id_persona = c.id_responsable '
+            + 'WHERE c.id_departamento = $1 ORDER BY c.periodo DESC, c.id_cargo DESC';
+        let sqlPagos = "SELECT i.id_ingreso, TO_CHAR(i.fecha, 'YYYY-MM-DD') AS fecha, i.concepto, i.monto, i.aplicado, i.a_favor, "
+            + 'i.metodo_pago, i.estado, i.aplica_deuda, t.nombre AS tipo_ingreso FROM v_ingreso i '
+            + 'JOIN tipo_ingreso t ON t.id_tipo_ingreso = i.id_tipo_ingreso WHERE i.id_departamento = $1 '
+            + 'ORDER BY i.fecha DESC, i.id_ingreso DESC';
+        let sqlResidentes = "SELECT r.id_residente, r.tipo_relacion, TO_CHAR(r.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, "
+            + "TO_CHAR(r.fecha_fin, 'YYYY-MM-DD') AS fecha_fin, r.estado, p.nombre AS persona FROM residente r "
+            + 'JOIN persona p ON p.id_persona = r.id_persona WHERE r.id_departamento = $1 ORDER BY r.estado, r.fecha_inicio DESC';
+
+        let [cargos, pagos, residentes, traspasos] = await Promise.all([
+            objDao.consultar(sqlCargos, [idDepartamento]),
+            objDao.consultar(sqlPagos, [idDepartamento]),
+            objDao.consultar(sqlResidentes, [idDepartamento]),
+            objTraspasoModel.ObtenerPorDepartamento(idDepartamento)
+        ]);
+        return { Departamento: departamento, Cargos: cargos, Pagos: pagos, Residentes: residentes, Traspasos: traspasos };
     }
 
     GuardarDepartamento(data) {
@@ -37,10 +71,14 @@ class departamentoModel {
         return objDao.ejecutar(sql, params);
     }
 
-    EliminarDepartamento(data) {
+    // Un departamento con historial no se elimina: se marca como inactivo
+    async EliminarDepartamento(data) {
+        let departamento = await objDao.obtenerUno(SQL_DEPARTAMENTOS + 'WHERE id_departamento = $1', [data.id_departamento]);
+        if (departamento && departamento.con_historial) {
+            throw new Error('No se puede eliminar: el departamento tiene residentes, cargos, pagos o traspasos registrados. Si ya no se usa, márquelo como inactivo');
+        }
         let sql = 'DELETE FROM departamento WHERE id_departamento = $1';
-        let params = [data.id_departamento];
-        return objDao.ejecutar(sql, params);
+        return objDao.ejecutar(sql, [data.id_departamento]);
     }
 }
 
