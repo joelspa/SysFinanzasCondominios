@@ -14,6 +14,7 @@ import Ingresos from './pages/Ingresos';
 import Comprobante from './pages/Comprobante';
 import Egresos from './pages/Egresos';
 import ComprobanteEgreso from './pages/ComprobanteEgreso';
+import Caja from './pages/Caja';
 import Configuracion from './pages/Configuracion';
 import Usuarios from './pages/Usuarios';
 
@@ -30,6 +31,7 @@ const paginas = {
     '/ingreso/comprobante': Comprobante,
     '/egreso': Egresos,
     '/egreso/comprobante': ComprobanteEgreso,
+    '/caja': Caja,
     '/configuracion': Configuracion,
     '/usuario': Usuarios
 };

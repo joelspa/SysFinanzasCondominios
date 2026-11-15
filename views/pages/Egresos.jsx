@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
-import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, mesLargo, sumar, numeroRecibo, textoAnulacion } from '../formato';
-import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
+import { coincide, dinero, dineroConSigno, formatoFecha, capitalizar, hoy, mesActual, mesLargo, sumar, numeroRecibo, textoAnulacion } from '../formato';
+import { ESTADOS_MOVIMIENTO, METODOS_PAGO, METODO_EFECTIVO } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
 import Resumen from '../components/Resumen';
@@ -41,17 +41,18 @@ export default function Egresos() {
 
     async function anular(motivo) {
         let error = await crud.ejecutar('/api/egreso/anularEgreso', { id_egreso: aAnular.id_egreso, motivo },
-            'El gasto se anuló y su monto volvió a la caja');
+            'El gasto se anuló y su monto volvió al saldo disponible');
         if (error) {
             return error;
         }
         setAAnular(null);
     }
 
-    // Dinero disponible para este gasto: el saldo en caja (al editar, más lo que ya ocupaba este gasto)
-    function disponible() {
-        let original = egresos.find((e) => e.id_egreso == formulario.id_egreso);
-        return Number(caja.saldo) + (original ? Number(original.monto) : 0);
+    // De dónde sale el dinero de un gasto nuevo según su método de pago (en efectivo, de la caja;
+    // con los demás, del banco) y cuánto hay ahí
+    function cuentaDelGasto() {
+        let enEfectivo = formulario.metodo_pago === METODO_EFECTIVO;
+        return { nombre: enEfectivo ? 'la caja' : 'el banco', disponible: Number(enEfectivo ? caja.efectivo : caja.banco) };
     }
 
     const saldo = Number(caja.saldo);
@@ -63,17 +64,19 @@ export default function Egresos() {
     const totalFiltrado = sumar(filtrados.filter((e) => e.estado === 'registrado'));
     const tipoElegido = formulario ? tipos.find((t) => t.id_tipo_egreso == formulario.id_tipo_egreso) : null;
     const esNuevo = formulario ? formulario.id_egreso == 0 : true;
+    const cuenta = formulario ? cuentaDelGasto() : null;
 
     return (
         <>
             <Encabezado titulo="Gastos"
-                descripcion="Pagos del condominio a proveedores y personal. Cada gasto descuenta del saldo en caja."
+                descripcion="Pagos del condominio a proveedores y personal. En efectivo salen de la caja; con los demás métodos, del banco."
                 textoBoton="Registrar gasto" onAdicionar={adicionar} />
             <Alerta mensaje={crud.mensaje} onCerrar={crud.cerrarMensaje} />
 
             <Resumen items={[
                 {
-                    etiqueta: 'Saldo en caja', valor: dinero(saldo), detalle: 'Ingresos menos gastos registrados',
+                    etiqueta: 'Disponible', valor: dineroConSigno(saldo),
+                    detalle: 'Caja ' + dineroConSigno(caja.efectivo) + ' · Banco ' + dineroConSigno(caja.banco),
                     tono: saldo < 0 ? 'critico' : 'bueno'
                 },
                 { etiqueta: 'Gastado en ' + mesLargo(mesActual()), valor: dinero(caja.egresos_mes) },
@@ -191,22 +194,25 @@ export default function Egresos() {
                             <textarea name="observacion" className="form-control" rows="2" maxLength="250"
                                 value={formulario.observacion} onChange={crud.cambiar} />
                         </Campo>
-                        <div className="col-12">
-                            {Number(formulario.monto) > disponible() ? (
-                                <Nota tono="aviso" titulo={'El gasto supera el saldo en caja (' + dinero(disponible()) + ')'}>
-                                    Se puede registrar igual (por ejemplo, si se paga con un fondo de reserva), pero la caja quedará en negativo.
-                                </Nota>
-                            ) : (
-                                <Nota tono="info">Saldo disponible en caja: <b>{dinero(disponible())}</b></Nota>
-                            )}
-                        </div>
+                        {esNuevo && (
+                            <div className="col-12">
+                                {Number(formulario.monto) > cuenta.disponible ? (
+                                    <Nota tono="aviso" titulo={'El gasto supera lo que hay en ' + cuenta.nombre + ' (' + dinero(cuenta.disponible) + ')'}>
+                                        Se puede registrar igual, pero ese saldo quedará en negativo. Revise el método de pago
+                                        o registre primero el depósito o retiro que falta en Caja y banco.
+                                    </Nota>
+                                ) : (
+                                    <Nota tono="info">Disponible en {cuenta.nombre}: <b>{dinero(cuenta.disponible)}</b></Nota>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </Modal>
             )}
 
             {aAnular && (
                 <ModalAnular titulo="Anular gasto" placeholder="Ej. Se registró dos veces"
-                    descripcion="El gasto queda en el historial como anulado y su monto vuelve a la caja."
+                    descripcion="El gasto queda en el historial como anulado, con su motivo y quién lo anuló, y su monto vuelve al saldo disponible."
                     onCerrar={() => setAAnular(null)} onConfirmar={anular}>
                     Comprobante Nº <b>{numeroRecibo(aAnular.numero)}</b>: gasto de <b>{dinero(aAnular.monto)}</b> por <b>{aAnular.concepto}</b> del {formatoFecha(aAnular.fecha)}.
                 </ModalAnular>

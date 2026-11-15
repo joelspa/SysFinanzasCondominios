@@ -18,6 +18,7 @@ const grupos = [
         titulo: 'Finanzas', opciones: [
             { ruta: '/ingreso', texto: 'Ingresos', icono: 'ingresos' },
             { ruta: '/egreso', texto: 'Gastos', icono: 'gastos' },
+            { ruta: '/caja', texto: 'Caja y banco', icono: 'caja' },
             { ruta: '/cargo', texto: 'Cuentas por cobrar', icono: 'cargos' }
         ]
     },

@@ -1,6 +1,8 @@
 const dao = require('./dao');
+const cajaModel = require('./cajaModel');
 const { siguienteNumero } = require('../services/correlativo');
 const objDao = new dao();
+const objCajaModel = new cajaModel();
 
 const SQL_EGRESOS = 'SELECT e.id_egreso, e.numero, e.id_tipo_egreso, t.nombre AS tipo_egreso, e.concepto, e.proveedor, e.numero_documento, '
     + "e.monto, TO_CHAR(e.fecha, 'YYYY-MM-DD') AS fecha, e.metodo_pago, e.estado, e.observacion, e.motivo_anulacion, "
@@ -8,28 +10,18 @@ const SQL_EGRESOS = 'SELECT e.id_egreso, e.numero, e.id_tipo_egreso, t.nombre AS
     + 'FROM egreso e JOIN tipo_egreso t ON t.id_tipo_egreso = e.id_tipo_egreso '
     + 'LEFT JOIN usuario ua ON ua.id_usuario = e.anulado_por ';
 
-// Saldo en caja del condominio: todo lo cobrado menos todo lo gastado, y lo mismo solo del mes actual
-// (solo movimientos registrados, sin anulados)
-const MES_ACTUAL = "fecha >= DATE_TRUNC('month', CURRENT_DATE)";
-const REGISTRADOS = "estado = 'registrado' AND id_condominio = $1";
-const SQL_CAJA = 'SELECT (SELECT COALESCE(SUM(monto), 0) FROM ingreso WHERE ' + REGISTRADOS + ') AS ingresos, '
-    + '(SELECT COALESCE(SUM(monto), 0) FROM egreso WHERE ' + REGISTRADOS + ') AS egresos, '
-    + '(SELECT COALESCE(SUM(monto), 0) FROM ingreso WHERE ' + REGISTRADOS + ' AND ' + MES_ACTUAL + ') AS ingresos_mes, '
-    + '(SELECT COALESCE(SUM(monto), 0) FROM egreso WHERE ' + REGISTRADOS + ' AND ' + MES_ACTUAL + ') AS egresos_mes';
-
 // Todos los métodos reciben primero el condominio activo: cada condominio ve y cambia solo sus gastos
 class egresoModel {
     constructor() { }
 
-    // Devuelve los gastos, los tipos para el combo y el saldo en caja
+    // Devuelve los gastos, los tipos para el combo y los saldos del condominio (disponible, en caja y en banco)
     async ObtenerEgresos(idCondominio) {
         let [egresos, tipos, caja] = await Promise.all([
             objDao.consultar(SQL_EGRESOS + 'WHERE e.id_condominio = $1 ORDER BY e.fecha DESC, e.id_egreso DESC', [idCondominio]),
             objDao.consultar('SELECT id_tipo_egreso, nombre, descripcion FROM tipo_egreso ORDER BY id_tipo_egreso'),
-            objDao.obtenerUno(SQL_CAJA, [idCondominio])
+            objCajaModel.ObtenerSaldos(idCondominio)
         ]);
-        let saldo = Number(caja.ingresos) - Number(caja.egresos);
-        return { Egresos: egresos, Tipos: tipos, Caja: { ...caja, saldo: saldo.toFixed(2) } };
+        return { Egresos: egresos, Tipos: tipos, Caja: caja };
     }
 
     // Datos para imprimir el comprobante de un gasto

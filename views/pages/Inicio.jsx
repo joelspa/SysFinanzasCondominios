@@ -135,8 +135,10 @@ export default function Inicio({ usuario }) {
 
             <div className="row g-3 mb-4">
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Saldo en caja" valor={dineroConSigno(saldoCaja)} icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}>
-                        <span className="indicador-detalle">Ingresos {dinero(caja.ingresos)} · Gastos {dinero(caja.egresos)}</span>
+                    <Indicador etiqueta="Disponible" valor={dineroConSigno(saldoCaja)} icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}>
+                        <a className="indicador-detalle enlace" href="/caja">
+                            Caja {dineroConSigno(caja.efectivo)} · Banco {dineroConSigno(caja.banco)}
+                        </a>
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">

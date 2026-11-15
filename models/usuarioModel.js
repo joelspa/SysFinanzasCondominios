@@ -3,11 +3,12 @@ const { cifrar } = require('../utils/contrasena');
 const objDao = new dao();
 
 // Nunca se devuelve password_hash: la contraseña no sale del servidor.
-//   movimientos: pagos, gastos y traspasos que registró o anuló (si tiene, no se puede eliminar)
+//   movimientos: pagos, gastos, traspasos y movimientos de caja que registró o anuló (si tiene, no se puede eliminar)
 //   condominios: ids de los condominios asignados (solo importa en el tesorero; el administrador ve todos)
 const SQL_USUARIOS = 'SELECT u.id_usuario, u.nombre, u.correo, u.rol, u.activo, '
     + '((SELECT COUNT(*) FROM ingreso i WHERE u.id_usuario IN (i.id_usuario, i.anulado_por)) '
     + '+ (SELECT COUNT(*) FROM egreso e WHERE u.id_usuario IN (e.id_usuario, e.anulado_por)) '
+    + '+ (SELECT COUNT(*) FROM movimiento_caja m WHERE u.id_usuario IN (m.id_usuario, m.anulado_por)) '
     + '+ (SELECT COUNT(*) FROM traspaso tr WHERE tr.id_usuario = u.id_usuario))::int AS movimientos, '
     + 'ARRAY(SELECT uc.id_condominio FROM usuario_condominio uc WHERE uc.id_usuario = u.id_usuario ORDER BY uc.id_condominio) AS condominios '
     + 'FROM usuario u ';

@@ -37,6 +37,15 @@ export const METODOS_PAGO = [
     { valor: 'tarjeta', texto: 'Tarjeta' }
 ];
 
+// Lo cobrado o pagado en efectivo está en la caja; con los demás métodos, en el banco (services/caja.js)
+export const METODO_EFECTIVO = 'efectivo';
+
+// Movimientos de dinero entre la caja y el banco (CHECK de la tabla movimiento_caja)
+export const SENTIDOS_CAJA = [
+    { valor: 'caja_a_banco', texto: 'Depósito: de la caja al banco', corto: 'Depósito al banco', origen: 'efectivo' },
+    { valor: 'banco_a_caja', texto: 'Retiro: del banco a la caja', corto: 'Retiro del banco', origen: 'banco' }
+];
+
 export const CONCEPTO_EXPENSAS = 'Expensas';  // igual que config/config.js
 
 // Sugerencias para el concepto de un cargo manual
