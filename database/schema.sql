@@ -41,6 +41,7 @@ CREATE TABLE departamento (
 CREATE TABLE persona (
     id_persona INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre     VARCHAR(120) NOT NULL,
+    documento  VARCHAR(20),                        -- CI o NIT (sale en los recibos)
     telefono   VARCHAR(25),
     correo     VARCHAR(120)
 );
@@ -107,9 +108,12 @@ CREATE TABLE cargo (
 -- Ingresos: el dinero que entra. Si aplica_deuda, se reparte entre los cargos del departamento
 -- (del más antiguo al más nuevo) y lo que sobra queda como saldo a favor.
 -- Sin departamento es un ingreso del condominio (alquiler del salón a un tercero, intereses del banco).
+-- Cada ingreso es un recibo: una vez emitido no cambia de monto, fecha ni departamento; si hubo
+-- un error se anula (queda quién y cuándo) y se registra otro.
 CREATE TABLE ingreso (
     id_ingreso       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_condominio    INT NOT NULL REFERENCES condominio(id_condominio),
+    numero           INT NOT NULL,                    -- número de recibo, correlativo por condominio
     id_departamento  INT REFERENCES departamento(id_departamento),
     id_tipo_ingreso  INT NOT NULL REFERENCES tipo_ingreso(id_tipo_ingreso),
     id_usuario       INT NOT NULL REFERENCES usuario(id_usuario),
@@ -120,7 +124,14 @@ CREATE TABLE ingreso (
     estado           VARCHAR(15) NOT NULL DEFAULT 'registrado'
                      CHECK (estado IN ('registrado', 'anulado')),
     aplica_deuda     BOOLEAN NOT NULL DEFAULT TRUE,   -- false: no paga deudas (ej. alquiler del salón)
-    motivo_anulacion VARCHAR(200),
+    pagador           VARCHAR(120),                   -- «Recibí de» (puede ser el inquilino)
+    pagador_documento VARCHAR(20),                    -- CI o NIT de quien pagó
+    referencia        VARCHAR(60),                    -- número de la transferencia o del QR
+    fecha_registro    TIMESTAMP NOT NULL DEFAULT now(),   -- cuándo se cargó al sistema
+    motivo_anulacion  VARCHAR(200),
+    anulado_por       INT REFERENCES usuario(id_usuario),
+    fecha_anulacion   TIMESTAMP,
+    UNIQUE (id_condominio, numero),
     CONSTRAINT ingreso_sin_departamento_check CHECK (id_departamento IS NOT NULL OR aplica_deuda = FALSE)
 );
 
@@ -153,9 +164,12 @@ CREATE TABLE tipo_egreso (
     descripcion    VARCHAR(200)
 );
 
+-- Gastos del condominio. Igual que los recibos de pago: numerados por condominio y, una vez
+-- emitidos, no cambian de monto ni de fecha (se anulan).
 CREATE TABLE egreso (
     id_egreso      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_condominio  INT NOT NULL REFERENCES condominio(id_condominio),
+    numero         INT NOT NULL,                   -- número de comprobante, correlativo por condominio
     id_usuario     INT NOT NULL REFERENCES usuario(id_usuario),
     concepto       VARCHAR(180) NOT NULL,
     monto          DECIMAL(18,2) NOT NULL CHECK (monto > 0),
@@ -167,7 +181,11 @@ CREATE TABLE egreso (
     proveedor        VARCHAR(150),                 -- a quién se le pagó
     numero_documento VARCHAR(50),                  -- factura o recibo del proveedor
     observacion      VARCHAR(250),
-    motivo_anulacion VARCHAR(200)
+    fecha_registro   TIMESTAMP NOT NULL DEFAULT now(),   -- cuándo se cargó al sistema
+    motivo_anulacion VARCHAR(200),
+    anulado_por      INT REFERENCES usuario(id_usuario),
+    fecha_anulacion  TIMESTAMP,
+    UNIQUE (id_condominio, numero)
 );
 
 -- Vistas con los saldos calculados

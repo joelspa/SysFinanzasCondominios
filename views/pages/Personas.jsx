@@ -13,7 +13,7 @@ import ConfirmarEliminar from '../components/ConfirmarEliminar';
 import Campo from '../components/Campo';
 import Icono from '../components/Icono';
 
-const personaNueva = { id_persona: 0, nombre: '', telefono: '', correo: '' };
+const personaNueva = { id_persona: 0, nombre: '', documento: '', telefono: '', correo: '' };
 
 // Misma regla que models/personaModel.js: con historial en el condominio no se puede eliminar
 const tieneHistorial = (persona) => persona.residencias > 0 || persona.traspasos > 0 || persona.cargos > 0;
@@ -31,7 +31,7 @@ export default function Personas() {
 
     const personas = crud.datos;
     const formulario = crud.formulario;
-    const filtradas = personas.filter((p) => coincide(busqueda, p.nombre, p.telefono, p.correo, p.id_persona));
+    const filtradas = personas.filter((p) => coincide(busqueda, p.nombre, p.documento, p.telefono, p.correo, p.id_persona));
 
     return (
         <>
@@ -46,7 +46,7 @@ export default function Personas() {
             ]} />
 
             <PanelTabla mostrados={filtradas.length} total={personas.length}
-                herramientas={<Buscador valor={busqueda} onCambiar={setBusqueda} placeholder="Buscar por nombre, teléfono o correo" />}>
+                herramientas={<Buscador valor={busqueda} onCambiar={setBusqueda} placeholder="Buscar por nombre, CI, teléfono o correo" />}>
                 <thead>
                     <tr>
                         <th>Persona</th>
@@ -65,7 +65,7 @@ export default function Personas() {
                                     <span className="avatar">{iniciales(persona.nombre)}</span>
                                     <div>
                                         <strong>{persona.nombre}</strong>
-                                        <span className="secundario">Código #{persona.id_persona}</span>
+                                        <span className="secundario">{persona.documento ? 'CI/NIT ' + persona.documento : 'Sin CI/NIT registrado'}</span>
                                     </div>
                                 </div>
                             </td>
@@ -94,18 +94,22 @@ export default function Personas() {
 
             {formulario && (
                 <Modal titulo={formulario.id_persona == 0 ? 'Nueva persona' : 'Editar persona'}
-                    descripcion="Datos de contacto del propietario, inquilino o familiar."
+                    descripcion="Datos del propietario, inquilino o familiar."
                     error={crud.error} onCerrar={crud.cerrarFormulario} onAceptar={crud.guardar}>
                     <div className="row g-3">
                         <Campo etiqueta="Nombre completo" requerido>
                             <input name="nombre" className="form-control" maxLength="120" placeholder="Ej. Ana Pérez"
                                 autoFocus value={formulario.nombre} onChange={crud.cambiar} />
                         </Campo>
-                        <Campo etiqueta="Teléfono" ancho="col-md-5">
+                        <Campo etiqueta="CI o NIT" ancho="col-md-6" ayuda="Sale en los recibos de pago.">
+                            <input name="documento" className="form-control" maxLength="20" placeholder="Ej. 7654321 SC"
+                                value={formulario.documento} onChange={crud.cambiar} />
+                        </Campo>
+                        <Campo etiqueta="Teléfono" ancho="col-md-6">
                             <input name="telefono" className="form-control" maxLength="25" placeholder="Ej. 70000000"
                                 value={formulario.telefono} onChange={crud.cambiar} />
                         </Campo>
-                        <Campo etiqueta="Correo electrónico" ancho="col-md-7">
+                        <Campo etiqueta="Correo electrónico">
                             <input name="correo" type="email" className="form-control" maxLength="120" placeholder="nombre@correo.com"
                                 value={formulario.correo} onChange={crud.cambiar} />
                         </Campo>

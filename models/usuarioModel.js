@@ -3,11 +3,11 @@ const { cifrar } = require('../utils/contrasena');
 const objDao = new dao();
 
 // Nunca se devuelve password_hash: la contraseña no sale del servidor.
-//   movimientos: pagos, gastos y traspasos que registró (si tiene, no se puede eliminar)
+//   movimientos: pagos, gastos y traspasos que registró o anuló (si tiene, no se puede eliminar)
 //   condominios: ids de los condominios asignados (solo importa en el tesorero; el administrador ve todos)
 const SQL_USUARIOS = 'SELECT u.id_usuario, u.nombre, u.correo, u.rol, u.activo, '
-    + '((SELECT COUNT(*) FROM ingreso i WHERE i.id_usuario = u.id_usuario) '
-    + '+ (SELECT COUNT(*) FROM egreso e WHERE e.id_usuario = u.id_usuario) '
+    + '((SELECT COUNT(*) FROM ingreso i WHERE u.id_usuario IN (i.id_usuario, i.anulado_por)) '
+    + '+ (SELECT COUNT(*) FROM egreso e WHERE u.id_usuario IN (e.id_usuario, e.anulado_por)) '
     + '+ (SELECT COUNT(*) FROM traspaso tr WHERE tr.id_usuario = u.id_usuario))::int AS movimientos, '
     + 'ARRAY(SELECT uc.id_condominio FROM usuario_condominio uc WHERE uc.id_usuario = u.id_usuario ORDER BY uc.id_condominio) AS condominios '
     + 'FROM usuario u ';
@@ -82,7 +82,7 @@ class usuarioModel {
         });
     }
 
-    // Un usuario que registró pagos, gastos o traspasos no se elimina (es parte del historial): se desactiva
+    // Un usuario que registró o anuló pagos, gastos o traspasos no se elimina (es parte del historial): se desactiva
     EliminarUsuario(data) {
         return objDao.transaccion(async function (t) {
             let usuario = await t.oneOrNone(SQL_USUARIOS + 'WHERE u.id_usuario = $1', [data.id_usuario]);

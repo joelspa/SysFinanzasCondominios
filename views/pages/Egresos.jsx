@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
-import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, mesLargo, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, mesLargo, sumar, numeroRecibo, textoAnulacion } from '../formato';
 import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
@@ -59,9 +59,10 @@ export default function Egresos() {
     const opcionesTipo = tipos.map((t) => ({ valor: String(t.id_tipo_egreso), texto: t.nombre }));
     const filtrados = egresos.filter((e) => (filtroEstado === '' || e.estado === filtroEstado)
         && (filtroTipo === '' || String(e.id_tipo_egreso) === filtroTipo)
-        && coincide(busqueda, e.concepto, e.proveedor, e.numero_documento, e.tipo_egreso));
+        && coincide(busqueda, e.concepto, e.proveedor, e.numero_documento, e.tipo_egreso, numeroRecibo(e.numero)));
     const totalFiltrado = sumar(filtrados.filter((e) => e.estado === 'registrado'));
     const tipoElegido = formulario ? tipos.find((t) => t.id_tipo_egreso == formulario.id_tipo_egreso) : null;
+    const esNuevo = formulario ? formulario.id_egreso == 0 : true;
 
     return (
         <>
@@ -93,7 +94,7 @@ export default function Egresos() {
             </>}>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
+                        <th>Comprobante</th>
                         <th>Concepto</th>
                         <th>Pagado a</th>
                         <th>Método</th>
@@ -106,7 +107,10 @@ export default function Egresos() {
                     {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={egresos.length > 0} />}
                     {filtrados.map((egreso) => (
                         <tr key={egreso.id_egreso} className={egreso.estado === 'anulado' ? 'anulado' : ''}>
-                            <td className="text-nowrap">{formatoFecha(egreso.fecha)}</td>
+                            <td className="text-nowrap">
+                                <span className="numero fw-semibold">Nº {numeroRecibo(egreso.numero)}</span>
+                                <span className="secundario">{formatoFecha(egreso.fecha)}</span>
+                            </td>
                             <td>
                                 {egreso.concepto}
                                 <span className="secundario">{egreso.tipo_egreso}</span>
@@ -119,7 +123,7 @@ export default function Egresos() {
                             <td className="text-end numero fw-semibold monto">{dinero(egreso.monto)}</td>
                             <td>
                                 <Estado valor={egreso.estado} />
-                                {egreso.motivo_anulacion && <span className="secundario" title={egreso.motivo_anulacion}>{egreso.motivo_anulacion}</span>}
+                                {egreso.motivo_anulacion && <span className="secundario" title={textoAnulacion(egreso)}>{egreso.motivo_anulacion}</span>}
                             </td>
                             <Acciones onEditar={egreso.estado === 'registrado' ? () => crud.abrirFormulario(egreso) : undefined}
                                 onEliminar={egreso.estado === 'registrado' ? () => setAAnular(egreso) : undefined}
@@ -141,18 +145,26 @@ export default function Egresos() {
             </PanelTabla>
 
             {formulario && (
-                <Modal titulo={formulario.id_egreso == 0 ? 'Registrar gasto' : 'Editar gasto'}
-                    textoAceptar={formulario.id_egreso == 0 ? 'Registrar gasto' : 'Guardar cambios'}
+                <Modal titulo={esNuevo ? 'Registrar gasto' : 'Corregir comprobante Nº ' + numeroRecibo(formulario.numero)}
+                    textoAceptar={esNuevo ? 'Registrar gasto' : 'Guardar cambios'}
                     descripcion="Guarde el número de factura o recibo del proveedor como respaldo."
                     error={crud.error} onCerrar={crud.cerrarFormulario} onAceptar={crud.guardar}>
                     <div className="row g-3">
+                        {!esNuevo && (
+                            <div className="col-12">
+                                <Nota tono="info" titulo="Un comprobante emitido no cambia de monto ni de fecha">
+                                    Aquí se corrigen los demás datos. Si el error está en el monto o la fecha, anule este gasto y registre uno nuevo.
+                                </Nota>
+                            </div>
+                        )}
                         <Campo etiqueta="Tipo de gasto" requerido ancho="col-md-6" ayuda={tipoElegido ? tipoElegido.descripcion : undefined}>
                             <select name="id_tipo_egreso" className="form-select" value={formulario.id_tipo_egreso} onChange={crud.cambiar}>
                                 <Opciones lista={tipos} valor="id_tipo_egreso" texto="nombre" />
                             </select>
                         </Campo>
                         <Campo etiqueta="Fecha" requerido ancho="col-md-6">
-                            <input name="fecha" type="date" className="form-control" value={formulario.fecha} onChange={crud.cambiar} />
+                            <input name="fecha" type="date" className="form-control" max={hoy()} disabled={!esNuevo}
+                                value={formulario.fecha} onChange={crud.cambiar} />
                         </Campo>
                         <Campo etiqueta="Concepto" requerido>
                             <input name="concepto" className="form-control" maxLength="180" placeholder="Ej. Mantenimiento mensual del ascensor"
@@ -168,7 +180,7 @@ export default function Egresos() {
                         </Campo>
                         <Campo etiqueta="Monto (Bs)" requerido ancho="col-md-6">
                             <input name="monto" type="number" step="0.01" min="0" className="form-control monto-entrada" placeholder="0.00"
-                                value={formulario.monto} onChange={crud.cambiar} />
+                                disabled={!esNuevo} value={formulario.monto} onChange={crud.cambiar} />
                         </Campo>
                         <Campo etiqueta="Método de pago" requerido ancho="col-md-6">
                             <select name="metodo_pago" className="form-select" value={formulario.metodo_pago} onChange={crud.cambiar}>
@@ -196,7 +208,7 @@ export default function Egresos() {
                 <ModalAnular titulo="Anular gasto" placeholder="Ej. Se registró dos veces"
                     descripcion="El gasto queda en el historial como anulado y su monto vuelve a la caja."
                     onCerrar={() => setAAnular(null)} onConfirmar={anular}>
-                    Gasto de <b>{dinero(aAnular.monto)}</b> por <b>{aAnular.concepto}</b> del {formatoFecha(aAnular.fecha)}.
+                    Comprobante Nº <b>{numeroRecibo(aAnular.numero)}</b>: gasto de <b>{dinero(aAnular.monto)}</b> por <b>{aAnular.concepto}</b> del {formatoFecha(aAnular.fecha)}.
                 </ModalAnular>
             )}
         </>

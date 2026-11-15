@@ -5,7 +5,7 @@ import Nota from '../components/Nota';
 import Icono from '../components/Icono';
 import VistaPreviaPago from './VistaPreviaPago';
 import { METODOS_PAGO, MAX_MESES_ADELANTO, CONCEPTO_EXPENSAS } from '../opciones';
-import { dinero, sumar } from '../formato';
+import { dinero, sumar, hoy } from '../formato';
 import { periodosAdelantados, simularPago } from '../logica/pagos';
 
 // Campos del pago (izquierda) y cuenta del departamento con la vista previa (derecha)
@@ -36,11 +36,15 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
 
     // Sin departamento es un ingreso del condominio: no paga deudas. Al volver a elegir un
     // departamento se vuelve a proponer aplicarlo a su deuda.
+    // Como quien paga se propone al propietario del departamento elegido (se puede cambiar: a veces paga el inquilino).
     function elegirDepartamento(valor) {
         let veniaSinDepartamento = formulario.id_departamento === '';
+        let elegido = departamentos.find((d) => d.id_departamento == valor);
         actualizar({
             id_departamento: valor, meses_adelantados: 0,
-            aplica_deuda: valor === '' ? false : (veniaSinDepartamento || aplica)
+            aplica_deuda: valor === '' ? false : (veniaSinDepartamento || aplica),
+            pagador: elegido ? (elegido.propietario || '') : '',
+            pagador_documento: elegido ? (elegido.documento_propietario || '') : ''
         });
     }
 
@@ -53,9 +57,16 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
         <div className="row g-4">
             <div className="col-lg-7">
                 <div className="row g-3">
+                    {!esNuevo && (
+                        <div className="col-12">
+                            <Nota tono="info" titulo="Un recibo emitido no cambia de monto, fecha ni departamento">
+                                Aquí se corrigen los demás datos. Si el error está en uno de esos tres, anule este recibo y registre uno nuevo.
+                            </Nota>
+                        </div>
+                    )}
                     <Campo etiqueta="Departamento" requerido ancho="col-sm-6">
                         <select name="id_departamento" className="form-select" value={formulario.id_departamento}
-                            onChange={(e) => elegirDepartamento(e.target.value)}>
+                            disabled={!esNuevo} onChange={(e) => elegirDepartamento(e.target.value)}>
                             <Opciones lista={departamentos} valor="id_departamento" texto="numero" />
                             <option value="">Sin departamento</option>
                         </select>
@@ -65,7 +76,7 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                             <Opciones lista={tipos} valor="id_tipo_ingreso" texto="nombre" />
                         </select>
                     </Campo>
-                    {departamento && (
+                    {esNuevo && departamento && (
                         <div className="col-12">
                             <Casilla etiqueta="Aplicar a la deuda del departamento" marcado={aplica}
                                 descripcion="Desactívelo para ingresos que no pagan cargos, como el alquiler del salón de eventos."
@@ -90,7 +101,7 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                     )}
                     <Campo etiqueta="Monto recibido (Bs)" requerido ancho={esNuevo && aplica ? 'col-sm-6' : 'col-12'}>
                         <input name="monto" type="number" step="0.01" min="0" className="form-control monto-entrada" placeholder="0.00"
-                            autoFocus value={formulario.monto} onChange={cambiar} />
+                            autoFocus={esNuevo} disabled={!esNuevo} value={formulario.monto} onChange={cambiar} />
                     </Campo>
                     {esNuevo && aplica && deuda - saldoFavor > 0 && (
                         <div className="col-12 atajos">
@@ -108,12 +119,27 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                         </div>
                     )}
                     <Campo etiqueta="Fecha de pago" requerido ancho="col-sm-6">
-                        <input name="fecha" type="date" className="form-control" value={formulario.fecha} onChange={cambiar} />
+                        <input name="fecha" type="date" className="form-control" max={hoy()} disabled={!esNuevo}
+                            value={formulario.fecha} onChange={cambiar} />
                     </Campo>
                     <Campo etiqueta="Método de pago" requerido ancho="col-sm-6">
                         <select name="metodo_pago" className="form-select" value={formulario.metodo_pago} onChange={cambiar}>
                             <Opciones lista={METODOS_PAGO} />
                         </select>
+                    </Campo>
+                    {formulario.metodo_pago !== 'efectivo' && (
+                        <Campo etiqueta="Nº de referencia" ayuda="El número de la transferencia o del QR, para ubicar el pago en el extracto del banco.">
+                            <input name="referencia" className="form-control" maxLength="60" placeholder="Ej. 4587123"
+                                value={formulario.referencia} onChange={cambiar} />
+                        </Campo>
+                    )}
+                    <Campo etiqueta="Recibí de" ancho="col-sm-7" ayuda="Quien entrega el dinero. Puede ser el inquilino.">
+                        <input name="pagador" className="form-control" maxLength="120" placeholder="Nombre de quien paga"
+                            value={formulario.pagador} onChange={cambiar} />
+                    </Campo>
+                    <Campo etiqueta="CI o NIT" ancho="col-sm-5">
+                        <input name="pagador_documento" className="form-control" maxLength="20"
+                            value={formulario.pagador_documento} onChange={cambiar} />
                     </Campo>
                     <Campo etiqueta="Concepto" requerido>
                         <input name="concepto" className="form-control" maxLength="180" placeholder="Ej. Pago de expensas"
@@ -144,7 +170,7 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
                 ) : !aplica ? (
                     <Nota tono="info">Este ingreso se registra sin aplicarse a la deuda del departamento.</Nota>
                 ) : !esNuevo ? (
-                    <Nota tono="info">Al guardar, el sistema vuelve a calcular a qué cargos se aplica este pago.</Nota>
+                    <Nota tono="info">Lo que cubre este recibo no cambia: se definió cuando se registró el pago.</Nota>
                 ) : (
                     <VistaPreviaPago simulacion={simulacion} monto={formulario.monto} />
                 )}

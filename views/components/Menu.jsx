@@ -39,7 +39,7 @@ const grupos = [
 // Páginas de detalle: se marcan dentro de su sección del menú
 const subpaginas = {
     '/departamento/ficha': 'Ficha del departamento',
-    '/ingreso/comprobante': 'Comprobante',
+    '/ingreso/comprobante': 'Recibo',
     '/egreso/comprobante': 'Comprobante'
 };
 

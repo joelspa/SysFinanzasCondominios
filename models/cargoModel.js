@@ -1,5 +1,5 @@
 const dao = require('./dao');
-const { reaplicar } = require('../services/aplicarPagos');
+const { aplicar } = require('../services/aplicarPagos');
 const { generarExpensas } = require('../services/expensas');
 const { validarDepartamento } = require('../services/condominio');
 const objDao = new dao();
@@ -43,21 +43,29 @@ class cargoModel {
         let params = [data.id_departamento, data.concepto, fechaPeriodo(data.periodo), data.monto, data.vencimiento];
         return objDao.transaccion(async function (t) {
             let nuevo = await t.one(sql, params);
-            await reaplicar(t, data.id_departamento);
+            await aplicar(t, data.id_departamento);
             return nuevo;
         });
     }
 
-    // Transacción: actualiza el cargo (el departamento no cambia) y recalcula los pagos aplicados
+    // Transacción: actualiza el cargo (el departamento no cambia). Lo ya pagado no se toca (los recibos
+    // emitidos no cambian), así que el monto no puede quedar por debajo de lo pagado. Si el monto sube
+    // y el departamento tiene saldo a favor, se aplica a la diferencia.
     ActualizarCargo(idCondominio, data) {
-        let sql = 'UPDATE cargo SET concepto = $1, periodo = $2, monto = $3, vencimiento = $4 '
-            + 'WHERE id_cargo = $5 AND ' + delCondominio('$6') + ' RETURNING id_departamento';
-        let params = [data.concepto, fechaPeriodo(data.periodo), data.monto, data.vencimiento, data.id_cargo, idCondominio];
+        let sql = 'UPDATE cargo SET concepto = $1, periodo = $2, monto = $3, vencimiento = $4 WHERE id_cargo = $5';
+        let params = [data.concepto, fechaPeriodo(data.periodo), data.monto, data.vencimiento, data.id_cargo];
         return objDao.transaccion(async function (t) {
-            let cargo = await t.oneOrNone(sql, params);
-            if (cargo) {
-                await reaplicar(t, cargo.id_departamento);
+            let cargo = await t.oneOrNone('SELECT id_departamento, pagado FROM v_cargo WHERE id_cargo = $1 AND ' + delCondominio('$2'),
+                [data.id_cargo, idCondominio]);
+            if (!cargo) {
+                return;
             }
+            if (Number(data.monto) < Number(cargo.pagado)) {
+                throw new Error('Este cargo ya tiene pagos por Bs ' + cargo.pagado
+                    + ': el monto no puede ser menor. Para bajarlo más, anule primero esos pagos');
+            }
+            await t.none(sql, params);
+            await aplicar(t, cargo.id_departamento);
         });
     }
 
@@ -67,7 +75,7 @@ class cargoModel {
         return objDao.transaccion(async function (t) {
             let cargo = await t.oneOrNone('SELECT pagado FROM v_cargo WHERE id_cargo = $1 AND ' + delCondominio('$2'), params);
             if (cargo && Number(cargo.pagado) > 0) {
-                throw new Error('No se puede eliminar un cargo que ya tiene pagos aplicados. Anule primero los pagos o modifique el monto');
+                throw new Error('No se puede eliminar un cargo que ya tiene pagos aplicados. Anule primero esos pagos');
             }
             await t.none('DELETE FROM cargo WHERE id_cargo = $1 AND ' + delCondominio('$2'), params);
         });
@@ -78,7 +86,7 @@ class cargoModel {
         return objDao.transaccion(async function (t) {
             let creados = await generarExpensas(t, idCondominio, data.periodo, data.dia_vencimiento);
             for (let fila of creados) {
-                await reaplicar(t, fila.id_departamento);
+                await aplicar(t, fila.id_departamento);
             }
             return { Creados: creados.length };
         });

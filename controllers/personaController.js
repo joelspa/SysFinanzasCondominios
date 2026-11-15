@@ -2,7 +2,7 @@ const personaModel = require('../models/personaModel');
 const { responder, leerCampos } = require('./respuesta');
 const objPersonaModel = new personaModel();
 
-const CAMPOS = ['nombre', 'telefono', 'correo'];
+const CAMPOS = ['nombre', 'documento', 'telefono', 'correo'];
 
 module.exports = {
     obtenerPersonas: (req, res) => {

@@ -1,13 +1,14 @@
 import Icono from '../components/Icono';
-import { contactoCondominio } from '../formato';
+import { contactoCondominio, numeroRecibo } from '../formato';
 
 // Hoja de comprobante lista para imprimir o guardar como PDF (de pago o de gasto).
-//   tipo: 'Comprobante de pago' | 'Comprobante de egreso'
+//   tipo: 'Recibo de pago' | 'Comprobante de egreso'
+//   numero: número correlativo del condominio
 //   volver: { href, texto } enlace para regresar
-//   motivoAnulacion: si viene, el documento se marca como ANULADO
+//   anulacion: motivo, quién y cuándo (ver textoAnulacion). Si viene, el documento se marca como ANULADO
 //   firmas: textos de las líneas de firma
-export default function DocumentoComprobante({ tipo, numero, condominio, volver, motivoAnulacion, firmas, children }) {
-    let anulado = !!motivoAnulacion;
+export default function DocumentoComprobante({ tipo, numero, condominio, volver, anulacion, firmas, children }) {
+    let anulado = !!anulacion;
     let contacto = condominio ? contactoCondominio(condominio) : '';
     return (
         <>
@@ -32,13 +33,13 @@ export default function DocumentoComprobante({ tipo, numero, condominio, volver,
                     </div>
                     <div className="text-end">
                         <span className="secundario">{tipo}</span>
-                        <strong className="comprobante-numero">Nº {String(numero).padStart(6, '0')}</strong>
+                        <strong className="comprobante-numero">Nº {numeroRecibo(numero)}</strong>
                     </div>
                 </header>
 
                 {children}
 
-                {anulado && <p className="comprobante-pie texto-deuda">Documento anulado. Motivo: {motivoAnulacion}</p>}
+                {anulado && <p className="comprobante-pie texto-deuda">Documento anulado. Motivo: {anulacion}</p>}
 
                 <div className="comprobante-firmas">
                     {firmas.map((firma) => <div key={firma}>{firma}</div>)}

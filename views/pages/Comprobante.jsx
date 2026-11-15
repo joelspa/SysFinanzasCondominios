@@ -1,32 +1,36 @@
 import useDatos from '../hooks/useDatos';
 import { parametro } from '../ruta';
-import { dinero, formatoFecha, capitalizar, mesLargo } from '../formato';
+import { dinero, formatoFecha, capitalizar, mesLargo, montoEnLetras, textoAnulacion } from '../formato';
 import Cargando from '../components/Cargando';
 import DocumentoComprobante, { DatosComprobante } from '../secciones/DocumentoComprobante';
 
 const idIngreso = parametro('id');
 
-// Comprobante de un pago recibido, con los cargos que cubrió
+// Recibo de un pago, con los cargos que cubrió
 export default function Comprobante() {
     const comprobante = useDatos('/api/ingreso/obtenerComprobante?id_ingreso=' + idIngreso, null);
     if (!comprobante.datos) {
-        return <Cargando texto="Cargando el comprobante..." error={comprobante.error} />;
+        return <Cargando texto="Cargando el recibo..." error={comprobante.error} />;
     }
 
     const { Ingreso: ingreso, Condominio: condominio } = comprobante.datos;
     const aplicaciones = ingreso.aplicaciones || [];
+    // Si no se escribió quién pagó, se entiende que fue el propietario
+    const pagador = ingreso.pagador || ingreso.propietario;
 
     return (
-        <DocumentoComprobante tipo="Comprobante de pago" numero={ingreso.id_ingreso} condominio={condominio}
-            volver={{ href: '/ingreso', texto: 'Ingresos' }} motivoAnulacion={ingreso.motivo_anulacion}
+        <DocumentoComprobante tipo="Recibo de pago" numero={ingreso.numero} condominio={condominio}
+            volver={{ href: '/ingreso', texto: 'Ingresos' }} anulacion={ingreso.motivo_anulacion && textoAnulacion(ingreso)}
             firmas={['Recibí conforme', 'Entregué conforme']}>
             {/* Un ingreso sin departamento es del condominio: no tiene propietario ni cuenta que mostrar */}
             <DatosComprobante datos={[
+                { etiqueta: 'Recibí de', valor: pagador },
+                { etiqueta: 'CI o NIT', valor: ingreso.pagador_documento },
                 { etiqueta: 'Fecha de pago', valor: formatoFecha(ingreso.fecha) },
                 { etiqueta: 'Departamento', valor: ingreso.departamento || 'Ingreso del condominio' },
                 { etiqueta: 'Propietario', valor: ingreso.departamento ? (ingreso.propietario || 'Sin registrar') : '—' },
-                { etiqueta: 'Método de pago', valor: capitalizar(ingreso.metodo_pago) },
                 { etiqueta: 'Tipo de ingreso', valor: ingreso.tipo_ingreso },
+                { etiqueta: 'Método de pago', valor: capitalizar(ingreso.metodo_pago) + (ingreso.referencia ? ' · Ref. ' + ingreso.referencia : '') },
                 { etiqueta: 'Registrado por', valor: ingreso.usuario }
             ]} />
 
@@ -57,6 +61,7 @@ export default function Comprobante() {
                 {Number(ingreso.a_favor) > 0 && <div><span>Queda como saldo a favor</span><span className="numero">{dinero(ingreso.a_favor)}</span></div>}
                 <div className="comprobante-total"><span>Total recibido</span><span className="numero">{dinero(ingreso.monto)}</span></div>
             </div>
+            <p className="comprobante-literal">Son: {montoEnLetras(ingreso.monto)}</p>
 
             {ingreso.estado === 'registrado' && ingreso.departamento && (
                 <p className="comprobante-pie">

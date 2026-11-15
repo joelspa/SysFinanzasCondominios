@@ -1737,6 +1737,14 @@ a.enlace-etiqueta:hover {
     color: var(--texto-3);
 }
 
+/* El monto escrito en letras, debajo del total */
+.comprobante-literal {
+    margin: 0.6rem 0 0;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--texto-2);
+}
+
 .comprobante-firmas {
     display: grid;
     grid-template-columns: 1fr 1fr;

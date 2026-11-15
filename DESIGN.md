@@ -38,6 +38,13 @@ La del sistema operativo (`system-ui`), sin fuentes descargadas. Los montos usan
 - Lo negativo lleva signo y color: `dineroConSigno()` → `−Bs 280,00` con la clase `baja`. Nunca un número positivo con la palabra «pérdida» al lado.
 - Deuda en `texto-deuda`; saldo a favor e ingresos en `sube`.
 
+## Recibos y comprobantes
+
+- Número siempre con `numeroRecibo()` → `Nº 000012` (correlativo de cada condominio; nunca el id interno).
+- El documento impreso lleva el monto en letras con `montoEnLetras()` → `Son: Quinientos 00/100 bolivianos`.
+- Un recibo emitido no cambia de monto, fecha ni departamento: al corregirlo esos campos se muestran bloqueados y una nota explica que hay que anular y registrar otro.
+- Lo anulado no se oculta: queda tachado en las listas y el documento muestra motivo, quién y cuándo (`textoAnulacion()`).
+
 ## Componentes (reutilizar antes de crear)
 
 | Necesidad | Componente |

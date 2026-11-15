@@ -20,14 +20,14 @@ class personaModel {
     }
 
     GuardarPersona(data) {
-        let sql = 'INSERT INTO persona (nombre, telefono, correo) VALUES ($1, $2, $3) RETURNING id_persona';
-        let params = [data.nombre, data.telefono, data.correo];
+        let sql = 'INSERT INTO persona (nombre, documento, telefono, correo) VALUES ($1, $2, $3, $4) RETURNING id_persona';
+        let params = [data.nombre, data.documento, data.telefono, data.correo];
         return objDao.insertar(sql, params);
     }
 
     ActualizarPersona(data) {
-        let sql = 'UPDATE persona SET nombre = $1, telefono = $2, correo = $3 WHERE id_persona = $4';
-        let params = [data.nombre, data.telefono, data.correo, data.id_persona];
+        let sql = 'UPDATE persona SET nombre = $1, documento = $2, telefono = $3, correo = $4 WHERE id_persona = $5';
+        let params = [data.nombre, data.documento, data.telefono, data.correo, data.id_persona];
         return objDao.ejecutar(sql, params);
     }
 

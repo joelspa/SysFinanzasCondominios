@@ -1,6 +1,6 @@
 import useDatos from '../hooks/useDatos';
 import { parametro } from '../ruta';
-import { dinero, formatoFecha, capitalizar } from '../formato';
+import { dinero, formatoFecha, capitalizar, montoEnLetras, textoAnulacion } from '../formato';
 import Cargando from '../components/Cargando';
 import DocumentoComprobante, { DatosComprobante } from '../secciones/DocumentoComprobante';
 
@@ -16,8 +16,8 @@ export default function ComprobanteEgreso() {
     const { Egreso: egreso, Condominio: condominio } = comprobante.datos;
 
     return (
-        <DocumentoComprobante tipo="Comprobante de egreso" numero={egreso.id_egreso} condominio={condominio}
-            volver={{ href: '/egreso', texto: 'Gastos' }} motivoAnulacion={egreso.motivo_anulacion}
+        <DocumentoComprobante tipo="Comprobante de egreso" numero={egreso.numero} condominio={condominio}
+            volver={{ href: '/egreso', texto: 'Gastos' }} anulacion={egreso.motivo_anulacion && textoAnulacion(egreso)}
             firmas={['Autorizado por', 'Recibí conforme']}>
             <DatosComprobante datos={[
                 { etiqueta: 'Fecha', valor: formatoFecha(egreso.fecha) },
@@ -34,6 +34,7 @@ export default function ComprobanteEgreso() {
             <div className="comprobante-totales">
                 <div className="comprobante-total"><span>Total pagado</span><span className="numero">{dinero(egreso.monto)}</span></div>
             </div>
+            <p className="comprobante-literal">Son: {montoEnLetras(egreso.monto)}</p>
         </DocumentoComprobante>
     );
 }

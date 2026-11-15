@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import useCrud from '../hooks/useCrud';
 import { parametro } from '../ruta';
-import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, sumar } from '../formato';
+import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, sumar, numeroRecibo, textoAnulacion } from '../formato';
 import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
@@ -31,14 +31,18 @@ export default function Ingresos() {
     const { Ingresos: ingresos, Departamentos: departamentos, Tipos: tipos, Pendientes: pendientes } = crud.datos;
     const formulario = crud.formulario;
 
-    // Propone el primer departamento; si el condominio aún no tiene ninguno, queda como ingreso del condominio
+    // Propone el primer departamento (y a su propietario como quien paga); si el condominio aún no
+    // tiene ninguno, queda como ingreso del condominio
     function adicionar(idDepartamento) {
-        let departamento = idDepartamento || (departamentos.length > 0 ? departamentos[0].id_departamento : '');
+        let id = idDepartamento || (departamentos.length > 0 ? departamentos[0].id_departamento : '');
+        let departamento = departamentos.find((d) => d.id_departamento == id);
         crud.abrirFormulario({
-            id_ingreso: 0, id_departamento: departamento,
+            id_ingreso: 0, id_departamento: id,
             id_tipo_ingreso: tipos.length > 0 ? tipos[0].id_tipo_ingreso : '',
-            concepto: departamento === '' ? '' : 'Pago de expensas', monto: '',
-            fecha: hoy(), metodo_pago: 'efectivo', aplica_deuda: departamento !== '', meses_adelantados: 0
+            concepto: id === '' ? '' : 'Pago de expensas', monto: '',
+            fecha: hoy(), metodo_pago: 'efectivo', referencia: '', aplica_deuda: id !== '', meses_adelantados: 0,
+            pagador: departamento ? departamento.propietario : '',
+            pagador_documento: departamento ? departamento.documento_propietario : ''
         });
     }
 
@@ -53,7 +57,7 @@ export default function Ingresos() {
 
     async function anular(motivo) {
         let error = await crud.ejecutar('/api/ingreso/anularIngreso', { id_ingreso: aAnular.id_ingreso, motivo },
-            'El pago se anuló y su monto volvió a la deuda');
+            'El recibo se anuló y lo que cubría volvió a quedar pendiente');
         if (error) {
             return error;
         }
@@ -63,7 +67,7 @@ export default function Ingresos() {
     const registrados = ingresos.filter((i) => i.estado === 'registrado');
     const filtrados = ingresos.filter((i) => (filtroEstado === '' || i.estado === filtroEstado)
         && (filtroMetodo === '' || i.metodo_pago === filtroMetodo)
-        && coincide(busqueda, i.concepto, i.departamento, i.tipo_ingreso));
+        && coincide(busqueda, i.concepto, i.departamento, i.tipo_ingreso, i.pagador, numeroRecibo(i.numero)));
     const totalFiltrado = sumar(filtrados.filter((i) => i.estado === 'registrado'));
 
     return (
@@ -81,7 +85,7 @@ export default function Ingresos() {
             ]} />
 
             <PanelTabla mostrados={filtrados.length} total={ingresos.length} herramientas={<>
-                <Buscador valor={busqueda} onCambiar={setBusqueda} placeholder="Buscar por concepto, departamento o tipo" />
+                <Buscador valor={busqueda} onCambiar={setBusqueda} placeholder="Buscar por recibo, departamento, concepto o quien pagó" />
                 <Filtro etiqueta="Filtrar por estado" todos="Todos los estados" opciones={ESTADOS_MOVIMIENTO}
                     valor={filtroEstado} onCambiar={setFiltroEstado} />
                 <Filtro etiqueta="Filtrar por método de pago" todos="Todos los métodos" opciones={METODOS_PAGO}
@@ -89,7 +93,7 @@ export default function Ingresos() {
             </>}>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
+                        <th>Recibo</th>
                         <th>Departamento</th>
                         <th>Concepto</th>
                         <th>Cubre</th>
@@ -102,7 +106,10 @@ export default function Ingresos() {
                     {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={ingresos.length > 0} />}
                     {filtrados.map((ingreso) => (
                         <tr key={ingreso.id_ingreso} className={ingreso.estado === 'anulado' ? 'anulado' : ''}>
-                            <td className="text-nowrap">{formatoFecha(ingreso.fecha)}</td>
+                            <td className="text-nowrap">
+                                <span className="numero fw-semibold">Nº {numeroRecibo(ingreso.numero)}</span>
+                                <span className="secundario">{formatoFecha(ingreso.fecha)}</span>
+                            </td>
                             <td>
                                 {ingreso.departamento
                                     ? <span className="etiqueta">{ingreso.departamento}</span>
@@ -119,7 +126,7 @@ export default function Ingresos() {
                             </td>
                             <td>
                                 <Estado valor={ingreso.estado} />
-                                {ingreso.motivo_anulacion && <span className="secundario" title={ingreso.motivo_anulacion}>{ingreso.motivo_anulacion}</span>}
+                                {ingreso.motivo_anulacion && <span className="secundario" title={textoAnulacion(ingreso)}>{ingreso.motivo_anulacion}</span>}
                             </td>
                             <Acciones onEditar={ingreso.estado === 'registrado' ? () => crud.abrirFormulario(ingreso) : undefined}
                                 onEliminar={ingreso.estado === 'registrado' ? () => setAAnular(ingreso) : undefined}
@@ -141,7 +148,7 @@ export default function Ingresos() {
             </PanelTabla>
 
             {formulario && (
-                <Modal titulo={formulario.id_ingreso == 0 ? 'Registrar pago' : 'Editar pago'} tamano="lg"
+                <Modal titulo={formulario.id_ingreso == 0 ? 'Registrar pago' : 'Corregir recibo Nº ' + numeroRecibo(formulario.numero)} tamano="lg"
                     textoAceptar={formulario.id_ingreso == 0 ? 'Registrar pago' : 'Guardar cambios'}
                     error={crud.error} onCerrar={crud.cerrarFormulario} onAceptar={crud.guardar}>
                     <FormularioPago formulario={formulario} cambiar={crud.cambiar} actualizar={crud.actualizarFormulario}
@@ -150,10 +157,10 @@ export default function Ingresos() {
             )}
 
             {aAnular && (
-                <ModalAnular titulo="Anular pago" placeholder="Ej. Depósito rechazado por el banco"
-                    descripcion="El pago queda en el historial como anulado y su monto vuelve a la deuda del departamento."
+                <ModalAnular titulo="Anular recibo" placeholder="Ej. Depósito rechazado por el banco"
+                    descripcion="El recibo queda en el historial como anulado, con su motivo y quién lo anuló, y lo que cubría vuelve a quedar pendiente."
                     onCerrar={() => setAAnular(null)} onConfirmar={anular}>
-                    Pago de <b>{dinero(aAnular.monto)}</b>
+                    Recibo Nº <b>{numeroRecibo(aAnular.numero)}</b> por <b>{dinero(aAnular.monto)}</b>
                     {aAnular.departamento ? <> del departamento <b>{aAnular.departamento}</b></> : ' (ingreso del condominio)'}
                     {' '}del {formatoFecha(aAnular.fecha)}.
                 </ModalAnular>
