@@ -8,12 +8,19 @@ const total = (tabla, condicion = '') => '(SELECT COALESCE(SUM(monto), 0) FROM '
 const MES_ACTUAL = " AND fecha >= DATE_TRUNC('month', CURRENT_DATE)";
 const EN_EFECTIVO = " AND metodo_pago = 'efectivo'";
 
-// Totales con los que services/caja.js calcula el disponible, lo que hay en caja y lo que hay en el banco
-const SQL_TOTALES = 'SELECT ' + total('ingreso') + ' AS ingresos, ' + total('egreso') + ' AS egresos, '
-    + total('ingreso', MES_ACTUAL) + ' AS ingresos_mes, ' + total('egreso', MES_ACTUAL) + ' AS egresos_mes, '
-    + total('ingreso', EN_EFECTIVO) + ' AS ingresos_efectivo, ' + total('egreso', EN_EFECTIVO) + ' AS egresos_efectivo, '
-    + total('movimiento_caja', " AND sentido = 'caja_a_banco'") + ' AS depositado, '
-    + total('movimiento_caja', " AND sentido = 'banco_a_caja'") + ' AS retirado';
+// Totales con los que services/caja.js calcula el disponible, lo que hay en caja y lo que hay en el banco.
+//   filtro: condición adicional para contar solo una parte de los movimientos
+const totales = (filtro = '') => total('ingreso', filtro) + ' AS ingresos, ' + total('egreso', filtro) + ' AS egresos, '
+    + total('ingreso', EN_EFECTIVO + filtro) + ' AS ingresos_efectivo, ' + total('egreso', EN_EFECTIVO + filtro) + ' AS egresos_efectivo, '
+    + total('movimiento_caja', " AND sentido = 'caja_a_banco'" + filtro) + ' AS depositado, '
+    + total('movimiento_caja', " AND sentido = 'banco_a_caja'" + filtro) + ' AS retirado';
+
+// Saldos de hoy, más lo cobrado y gastado en el mes actual
+const SQL_TOTALES = 'SELECT ' + totales() + ', '
+    + total('ingreso', MES_ACTUAL) + ' AS ingresos_mes, ' + total('egreso', MES_ACTUAL) + ' AS egresos_mes';
+
+// Saldos con los que el condominio empezó un día: solo cuenta lo anterior a esa fecha ($2)
+const SQL_TOTALES_ANTES = 'SELECT ' + totales(' AND fecha < $2');
 
 const SQL_MOVIMIENTOS = "SELECT m.id_movimiento_caja, m.sentido, m.monto, TO_CHAR(m.fecha, 'YYYY-MM-DD') AS fecha, m.observacion, "
     + 'm.estado, m.motivo_anulacion, u.nombre AS usuario, ua.nombre AS anulado_por, '
@@ -27,6 +34,12 @@ class cajaModel {
     // Saldos del condominio: disponible, en caja y en banco (también los usan Gastos y el panel)
     async ObtenerSaldos(idCondominio) {
         return calcularSaldos(await objDao.obtenerUno(SQL_TOTALES, [idCondominio]));
+    }
+
+    // Saldos que había al empezar una fecha ('YYYY-MM-DD'): los usa el reporte mensual como saldo
+    // inicial (primer día del mes) y saldo final (primer día del mes siguiente)
+    async ObtenerSaldosAntesDe(idCondominio, fecha) {
+        return calcularSaldos(await objDao.obtenerUno(SQL_TOTALES_ANTES, [idCondominio, fecha]));
     }
 
     // Devuelve los saldos y los depósitos y retiros entre la caja y el banco

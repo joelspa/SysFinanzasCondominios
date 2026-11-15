@@ -68,5 +68,6 @@ La del sistema operativo (`system-ui`), sin fuentes descargadas. Los montos usan
 - **Singular y plural**: `cantidad(1, 'cargo vencido', 'cargos vencidos')`.
 - **Íconos**: solo los de `views/components/Icono.jsx`; no emojis ni símbolos de texto.
 - **Teclado y accesibilidad**: foco visible, botones de ícono con `aria-label`, se respeta «reducir movimiento».
-- **Impresión**: lo que no va en papel lleva la clase `no-imprimir`.
+- **Impresión**: lo que no va en papel lleva la clase `no-imprimir`. Los documentos (recibo, reporte, aviso) empiezan con `Membrete`. Antes de dar por terminada una pantalla imprimible hay que verla como PDF: los paneles no deben partirse entre hojas, y las barras y etiquetas de color deben salir (ver el bloque `@media print` de `Site.css`).
+- **Gráficos**: barras horizontales (`BarrasHorizontales`) para comparar montos por tipo, siempre con el valor escrito al lado; azul para ingresos y naranja para gastos, nunca al revés.
 - **Anchos a revisar** al terminar una pantalla: 1440, 1280 y 520 px.

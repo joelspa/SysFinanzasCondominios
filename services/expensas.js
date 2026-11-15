@@ -1,4 +1,5 @@
 const { CONCEPTO_EXPENSAS } = require('../config/config');
+const { sumarMeses } = require('../utils/periodo');
 
 // Emisión de expensas (cargos mensuales). La cuota sale del tipo de departamento, el responsable
 // es el propietario actual y el vencimiento es el día configurado en el condominio.
@@ -9,13 +10,6 @@ const SQL_GENERAR = 'INSERT INTO cargo (id_departamento, id_responsable, concept
     + 'SELECT d.id_departamento, d.id_propietario, $1, $2::date, d.cuota_mensual, $3::date FROM v_departamento d '
     + "WHERE d.estado = 'activo' AND d.id_condominio = $4 AND ($5::int IS NULL OR d.id_departamento = $5) "
     + 'ON CONFLICT (id_departamento, periodo, concepto) DO NOTHING RETURNING id_departamento';
-
-// '2026-11' + 3 meses -> '2027-02'
-function sumarMeses(periodo, cantidad) {
-    let [anio, mes] = periodo.split('-').map(Number);
-    let total = anio * 12 + (mes - 1) + cantidad;
-    return Math.floor(total / 12) + '-' + String(total % 12 + 1).padStart(2, '0');
-}
 
 // Emite la expensa del período ('YYYY-MM') para todos los departamentos activos del condominio
 // o solo para uno. Devuelve los departamentos a los que se les creó.

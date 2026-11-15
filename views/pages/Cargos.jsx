@@ -81,6 +81,9 @@ export default function Cargos() {
             <Encabezado titulo="Cuentas por cobrar"
                 descripcion="Expensas, multas y demás cargos de cada departamento, con lo pagado y lo que falta cobrar."
                 textoBoton="Nuevo cargo" onAdicionar={adicionar}>
+                <a className="btn btn-light" href="/cargo/avisos">
+                    <Icono nombre="imprimir" tamano={16} /> Avisos de cobranza
+                </a>
                 <button className="btn btn-outline-primary" onClick={() => setGenerando(true)}>
                     <Icono nombre="generar" tamano={16} /> Generar expensas
                 </button>

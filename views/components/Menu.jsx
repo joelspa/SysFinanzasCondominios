@@ -19,7 +19,8 @@ const grupos = [
             { ruta: '/ingreso', texto: 'Ingresos', icono: 'ingresos' },
             { ruta: '/egreso', texto: 'Gastos', icono: 'gastos' },
             { ruta: '/caja', texto: 'Caja y banco', icono: 'caja' },
-            { ruta: '/cargo', texto: 'Cuentas por cobrar', icono: 'cargos' }
+            { ruta: '/cargo', texto: 'Cuentas por cobrar', icono: 'cargos' },
+            { ruta: '/reporte', texto: 'Reporte mensual', icono: 'ficha' }
         ]
     },
     {
@@ -41,6 +42,7 @@ const grupos = [
 const subpaginas = {
     '/departamento/ficha': 'Ficha del departamento',
     '/ingreso/comprobante': 'Recibo',
+    '/cargo/avisos': 'Avisos de cobranza',
     '/egreso/comprobante': 'Comprobante'
 };
 

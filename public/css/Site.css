@@ -2118,3 +2118,126 @@ a.enlace-etiqueta:hover {
 .menu-condominio .form-select:focus {
     border-color: var(--serie);
 }
+
+/* ===== Reporte mensual y avisos de cobranza (documentos para imprimir) ===== */
+.selector-mes {
+    width: auto;
+}
+
+.reporte {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.reporte > .panel {
+    margin-bottom: 1.5rem;
+}
+
+.reporte-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 2px solid var(--texto);
+}
+
+.reporte-mes {
+    display: block;
+    font-size: 1.3rem;
+}
+
+/* Dos paneles lado a lado (uno debajo del otro en pantallas angostas) */
+.reporte-columnas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .reporte-columnas {
+        grid-template-columns: 1fr;
+    }
+}
+
+.reporte-cobranza {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 0 0 0.75rem;
+}
+
+.reporte-cobranza dt {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--texto-3);
+}
+
+.reporte-cobranza dd {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 650;
+}
+
+.aviso-cobranza {
+    margin-bottom: 1.5rem;
+}
+
+.aviso-vacio {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+@media print {
+    /* Los navegadores no imprimen los fondos de color: sin esto las barras, los puntos y las
+       etiquetas de estado saldrían en blanco en el papel */
+    .bh-pista,
+    .bh-pista span,
+    .progreso,
+    .progreso span,
+    .estado,
+    .estado::before,
+    .etiqueta,
+    .menu-logo,
+    .resumen-etiqueta::before {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .reporte {
+        max-width: none;
+    }
+
+    /* En papel los paneles van uno debajo del otro: así ninguno se parte entre dos hojas */
+    .reporte-columnas {
+        display: block;
+        margin-bottom: 0;
+    }
+
+    .reporte-columnas > .panel {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Las firmas no quedan solas en una hoja: van junto a la última sección */
+    .reporte .comprobante-firmas {
+        margin-top: 3rem;
+        break-before: avoid;
+        break-inside: avoid;
+    }
+
+    /* Sin esto el recorte del documento se come el borde de la primera letra de cada línea */
+    .comprobante {
+        overflow: visible;
+    }
+
+    /* Cada aviso de cobranza va en su propia hoja */
+    .aviso-cobranza {
+        margin: 0;
+        break-after: page;
+    }
+
+    .aviso-cobranza:last-child {
+        break-after: auto;
+    }
+}

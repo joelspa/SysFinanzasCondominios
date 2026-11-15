@@ -15,6 +15,8 @@ import Comprobante from './pages/Comprobante';
 import Egresos from './pages/Egresos';
 import ComprobanteEgreso from './pages/ComprobanteEgreso';
 import Caja from './pages/Caja';
+import ReporteMensual from './pages/ReporteMensual';
+import AvisosCobranza from './pages/AvisosCobranza';
 import Configuracion from './pages/Configuracion';
 import Usuarios from './pages/Usuarios';
 
@@ -27,6 +29,8 @@ const paginas = {
     '/departamento/ficha': FichaDepartamento,
     '/residente': Residentes,
     '/cargo': Cargos,
+    '/cargo/avisos': AvisosCobranza,
+    '/reporte': ReporteMensual,
     '/ingreso': Ingresos,
     '/ingreso/comprobante': Comprobante,
     '/egreso': Egresos,

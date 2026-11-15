@@ -1,5 +1,6 @@
 import Icono from '../components/Icono';
-import { contactoCondominio, numeroRecibo } from '../formato';
+import Membrete from '../components/Membrete';
+import { numeroRecibo } from '../formato';
 
 // Hoja de comprobante lista para imprimir o guardar como PDF (de pago o de gasto).
 //   tipo: 'Recibo de pago' | 'Comprobante de egreso'
@@ -9,7 +10,6 @@ import { contactoCondominio, numeroRecibo } from '../formato';
 //   firmas: textos de las líneas de firma
 export default function DocumentoComprobante({ tipo, numero, condominio, volver, anulacion, firmas, children }) {
     let anulado = !!anulacion;
-    let contacto = condominio ? contactoCondominio(condominio) : '';
     return (
         <>
             <div className="comprobante-acciones no-imprimir">
@@ -23,14 +23,7 @@ export default function DocumentoComprobante({ tipo, numero, condominio, volver,
                 {anulado && <div className="sello-anulado" aria-hidden="true">ANULADO</div>}
 
                 <header className="comprobante-cabecera">
-                    <div className="d-flex align-items-center gap-3">
-                        <span className="menu-logo"><Icono nombre="departamentos" tamano={20} /></span>
-                        <div>
-                            <strong className="d-block">{condominio ? condominio.nombre : 'Condominio'}</strong>
-                            <span className="secundario">{condominio ? condominio.direccion : ''}</span>
-                            {contacto && <span className="secundario">{contacto}</span>}
-                        </div>
-                    </div>
+                    <Membrete condominio={condominio} />
                     <div className="text-end">
                         <span className="secundario">{tipo}</span>
                         <strong className="comprobante-numero">Nº {numeroRecibo(numero)}</strong>
