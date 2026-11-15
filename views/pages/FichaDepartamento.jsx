@@ -3,7 +3,7 @@ import useDatos from '../hooks/useDatos';
 import { enviar } from '../api';
 import { parametro } from '../ruta';
 import { dinero, decimal, formatoFecha, capitalizar, mesLargo, sumar, cantidad } from '../formato';
-import { ocupacion } from '../logica/departamentos';
+import { ocupacion, enlaceCobro } from '../logica/departamentos';
 import { textoSalida } from '../logica/residentes';
 import Resumen from '../components/Resumen';
 import Pestanas from '../components/Pestanas';
@@ -83,7 +83,7 @@ export default function FichaDepartamento() {
                     <button className="btn btn-outline-primary" onClick={() => setTraspasando(true)} disabled={datosTraspaso.cargando}>
                         <Icono nombre="traspaso" tamano={16} /> Traspasar propiedad
                     </button>
-                    <a className="btn btn-primary" href={'/ingreso?departamento=' + departamento.id_departamento}>
+                    <a className="btn btn-primary" href={enlaceCobro(departamento.id_departamento)}>
                         <Icono nombre="ingresos" tamano={16} /> Registrar pago
                     </a>
                 </div>

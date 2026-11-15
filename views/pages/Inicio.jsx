@@ -7,6 +7,7 @@ import Nota from '../components/Nota';
 import { GraficoColumnas, BarraEstados, BarrasHorizontales } from '../components/Graficos';
 import { dinero, dineroConSigno, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar, cantidad } from '../formato';
 import { estaDisponible, enlaceFicha } from '../logica/departamentos';
+import { CONCEPTO_EXPENSAS } from '../opciones';
 
 const SERIES = [
     { clave: 'ingresos', etiqueta: 'Ingresos', clase: 'serie-1' },
@@ -106,6 +107,11 @@ export default function Inicio({ usuario }) {
     const ocupacion = activos.length > 0 ? (activos.length - disponibles.length) / activos.length * 100 : 0;
     const disponibilidad = textoDisponibilidad(activos.length, disponibles.length, ocupacion);
 
+    // Departamentos activos que todavía no tienen la expensa de este mes (falta emitirla)
+    const conExpensa = new Set(listaCargos.filter((c) => c.concepto === CONCEPTO_EXPENSAS && c.periodo === esteMes)
+        .map((c) => c.id_departamento));
+    const sinExpensa = activos.filter((d) => !conExpensa.has(d.id_departamento)).length;
+
     const morosos = listaDepartamentos.filter((d) => Number(d.deuda) > 0)
         .sort((a, b) => Number(b.deuda) - Number(a.deuda)).slice(0, 6);
     const movimientos = ultimosMovimientos(ingresos.datos.Ingresos, egresos.datos.Egresos, 6);
@@ -129,6 +135,20 @@ export default function Inicio({ usuario }) {
                         Para empezar: revise los <a href="/configuracion#tipoDepartamento">tipos de departamento</a> y sus cuotas,
                         registre los <a href="/departamento">departamentos</a> y asigne a sus <a href="/residente">propietarios</a>.
                         Después podrá generar las expensas de cada mes.
+                    </Nota>
+                </div>
+            )}
+
+            {sinExpensa > 0 && (
+                <div className="mb-3">
+                    <Nota tono="aviso" titulo={'Falta emitir las expensas de ' + mesLargo(esteMes)}>
+                        {cantidad(sinExpensa, 'departamento activo todavía no tiene', 'departamentos activos todavía no tienen')} su
+                        expensa de este mes, así que no aparece en lo que hay por cobrar.
+                        <div className="mt-2">
+                            <a className="btn btn-sm btn-outline-primary" href="/cargo?generar=1">
+                                <Icono nombre="generar" tamano={14} /> Generar expensas
+                            </a>
+                        </div>
                     </Nota>
                 </div>
             )}

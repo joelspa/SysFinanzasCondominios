@@ -2,7 +2,7 @@ import { useState } from 'react';
 import useCrud from '../hooks/useCrud';
 import { coincide, dinero, decimal, sumar } from '../formato';
 import { ESTADOS_REGISTRO, OCUPACION } from '../opciones';
-import { ocupacion, enlaceFicha } from '../logica/departamentos';
+import { ocupacion, enlaceFicha, enlaceCobro } from '../logica/departamentos';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
 import Resumen from '../components/Resumen';
@@ -141,6 +141,9 @@ export default function Departamentos() {
                             {/* Con historial no se elimina: se marca como inactivo al editarlo */}
                             <Acciones onEditar={() => crud.abrirFormulario(departamento)}
                                 onEliminar={departamento.con_historial ? undefined : () => crud.confirmarEliminar(departamento)}>
+                                {Number(departamento.deuda) > 0 && (
+                                    <BotonIcono icono="ingresos" titulo="Cobrar" href={enlaceCobro(departamento.id_departamento)} />
+                                )}
                                 <BotonIcono icono="ficha" titulo="Ver ficha" href={enlaceFicha(departamento.id_departamento)} />
                             </Acciones>
                         </tr>

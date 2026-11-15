@@ -871,6 +871,16 @@ body {
     border-color: var(--borde-suave);
 }
 
+/* En portátiles las columnas van más juntas, para que las tablas de muchas columnas entren completas */
+@media (max-width: 1399.98px) {
+    .tabla thead th,
+    .tabla td,
+    .tabla tfoot th {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
 .tabla th:first-child,
 .tabla td:first-child {
     padding-left: 1.25rem;

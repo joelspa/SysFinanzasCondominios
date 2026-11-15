@@ -14,3 +14,8 @@ export function ocupacion(departamento) {
 export function enlaceFicha(idDepartamento) {
     return '/departamento/ficha?id=' + idDepartamento;
 }
+
+// Abre Ingresos con el formulario de pago listo para ese departamento
+export function enlaceCobro(idDepartamento) {
+    return '/ingreso?departamento=' + idDepartamento;
+}

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useCrud from '../hooks/useCrud';
+import { parametro } from '../ruta';
 import { coincide, dinero, formatoFecha, capitalizar, mesLargo, mesAbreviado, mesActual, sumar, cantidad } from '../formato';
 import { ESTADOS_CARGO, CONCEPTOS_CARGO } from '../opciones';
-import { enlaceFicha } from '../logica/departamentos';
+import { enlaceFicha, enlaceCobro } from '../logica/departamentos';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
 import Resumen from '../components/Resumen';
@@ -33,6 +34,16 @@ export default function Cargos() {
 
     const { Cargos: cargos, Departamentos: departamentos, DiaVencimiento: diaVencimiento } = crud.datos;
     const formulario = crud.formulario;
+
+    // Desde el aviso del panel se llega con ?generar=1 para emitir las expensas del mes.
+    // Se espera a que carguen los datos: la ventana los necesita para calcular cuántas faltan.
+    const abrirGenerar = useRef(parametro('generar') === '1');
+    useEffect(() => {
+        if (!crud.cargando && abrirGenerar.current) {
+            setGenerando(true);
+            abrirGenerar.current = false;
+        }
+    }, [crud.cargando]);
 
     // Vencimiento propuesto para un mes: el día configurado en el condominio
     const vencimientoDe = (periodo) => periodo ? periodo + '-' + String(diaVencimiento).padStart(2, '0') : '';
@@ -79,7 +90,7 @@ export default function Cargos() {
     return (
         <>
             <Encabezado titulo="Cuentas por cobrar"
-                descripcion="Expensas, multas y demás cargos de cada departamento, con lo pagado y lo que falta cobrar."
+                descripcion="Expensas, multas y demás cargos de cada departamento."
                 textoBoton="Nuevo cargo" onAdicionar={adicionar}>
                 <a className="btn btn-light" href="/cargo/avisos">
                     <Icono nombre="imprimir" tamano={16} /> Avisos de cobranza
@@ -135,8 +146,11 @@ export default function Cargos() {
                             </td>
                             <td className={'text-end numero fw-semibold' + (Number(cargo.saldo) > 0 ? ' texto-deuda' : '')}>{dinero(cargo.saldo)}</td>
                             <td><Estado valor={cargo.estado} /></td>
+                            {/* Con saldo se ofrece cobrar; si ya está pagado, ver la ficha del departamento */}
                             <Acciones onEditar={() => crud.abrirFormulario(cargo)} onEliminar={() => crud.confirmarEliminar(cargo)}>
-                                <BotonIcono icono="ficha" titulo="Ver ficha del departamento" href={enlaceFicha(cargo.id_departamento)} />
+                                {Number(cargo.saldo) > 0
+                                    ? <BotonIcono icono="ingresos" titulo="Cobrar a este departamento" href={enlaceCobro(cargo.id_departamento)} />
+                                    : <BotonIcono icono="ficha" titulo="Ver ficha del departamento" href={enlaceFicha(cargo.id_departamento)} />}
                             </Acciones>
                         </tr>
                     ))}
