@@ -80,7 +80,7 @@ export default function FichaDepartamento() {
                     <button className="btn btn-light" onClick={() => window.print()}>
                         <Icono nombre="imprimir" tamano={16} /> Imprimir
                     </button>
-                    <button className="btn btn-outline-primary" onClick={() => setTraspasando(true)} disabled={datosTraspaso.cargando}>
+                    <button className="btn btn-outline-primary" data-guia="traspasar" onClick={() => setTraspasando(true)} disabled={datosTraspaso.cargando}>
                         <Icono nombre="traspaso" tamano={16} /> Traspasar propiedad
                     </button>
                     <a className="btn btn-primary" href={enlaceCobro(departamento.id_departamento)}>

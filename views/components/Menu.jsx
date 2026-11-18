@@ -6,20 +6,24 @@ import ModalContrasena from '../secciones/ModalContrasena';
 import { enviar } from '../api';
 import { fechaLarga, iniciales } from '../formato';
 import { RUTAS_ADMIN, textoRol } from '../opciones';
+import { tieneGuia } from '../guias';
+import { abrirGuia } from './Guia';
 
 const grupos = [
     {
         titulo: 'General', opciones: [
             { ruta: '/', texto: 'Panel principal', icono: 'inicio' },
-            { ruta: '/condominio', texto: 'Condominios', icono: 'edificios' }
+            { ruta: '/condominio', texto: 'Condominios', icono: 'edificios' },
+            { ruta: '/ayuda', texto: 'Ayuda y glosario', icono: 'ayuda' }
         ]
     },
     {
+        // En el orden del trabajo de cada mes: emitir lo que se cobra, cobrar, gastar, depositar y rendir cuentas
         titulo: 'Finanzas', opciones: [
+            { ruta: '/cargo', texto: 'Cuentas por cobrar', icono: 'cargos' },
             { ruta: '/ingreso', texto: 'Ingresos', icono: 'ingresos' },
             { ruta: '/egreso', texto: 'Gastos', icono: 'gastos' },
             { ruta: '/caja', texto: 'Caja y banco', icono: 'caja' },
-            { ruta: '/cargo', texto: 'Cuentas por cobrar', icono: 'cargos' },
             { ruta: '/reporte', texto: 'Reporte mensual', icono: 'ficha' }
         ]
     },
@@ -102,7 +106,7 @@ export default function Menu({ ruta, usuario }) {
                     </span>
                 </a>
                 {usuario.condominios.length > 1 && (
-                    <div className="menu-condominio">
+                    <div className="menu-condominio" data-guia="selector-condominio">
                         <label htmlFor="condominio-activo">Trabajando en</label>
                         <select id="condominio-activo" className="form-select form-select-sm"
                             value={usuario.id_condominio} onChange={cambiarCondominio}>
@@ -110,7 +114,7 @@ export default function Menu({ ruta, usuario }) {
                         </select>
                     </div>
                 )}
-                <nav className="menu-navegacion">
+                <nav className="menu-navegacion" data-guia="menu">
                     {visibles.map((grupo) => (
                         <div key={grupo.titulo}>
                             <div className="menu-grupo">{grupo.titulo}</div>
@@ -153,7 +157,14 @@ export default function Menu({ ruta, usuario }) {
                         <strong>{actual ? actual.texto : 'Panel principal'}</strong>
                     )}
                 </div>
-                <div className="barra-fecha ms-auto">
+                {tieneGuia(ruta) && (
+                    <button type="button" className="boton-guia ms-auto" data-guia="boton-guia" onClick={abrirGuia}
+                        title="Ver la guía de esta pantalla">
+                        <Icono nombre="ayuda" tamano={17} />
+                        <span>Guía de esta pantalla</span>
+                    </button>
+                )}
+                <div className={'barra-fecha' + (tieneGuia(ruta) ? '' : ' ms-auto')}>
                     <Icono nombre="calendario" tamano={16} />
                     {fechaLarga()}
                 </div>

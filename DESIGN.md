@@ -56,14 +56,41 @@ La del sistema operativo (`system-ui`), sin fuentes descargadas. Los montos usan
 | Formularios | `Modal`, `Campo`, `Casilla`, `Opciones` |
 | Mensajes | `Alerta` (resultado de una acción), `Nota` (dentro de la página o el formulario) |
 | Estado de un registro | `Estado` |
-| Indicadores y gráficos del panel | `Indicador`, `Graficos` |
+| Indicadores y gráficos del panel | `Indicador`, `Graficos`, `CifraAnimada` |
+| Explicar un término («?») | `Ayuda` con una clave de `views/glosario.js` |
+| Carga | `Cargando` (silueta de la página) y `SinDatos` (filas de silueta en la tabla) |
+
+## Ayuda para quien recién empieza
+
+El sistema lo usan personas sin experiencia contable, así que cada pantalla se explica sola.
+
+- **Guía de cada pantalla** (`views/components/Guia.jsx` y `Recorrido.jsx`). Se abre sola la primera vez que el usuario entra a una pantalla y después con el botón «Guía de esta pantalla» de la barra superior; `?guia=1` en la dirección también la abre. Los pasos se escriben en `views/guias.js`, uno por ruta, y apuntan a elementos con el atributo `data-guia="..."` o a clases que ya existen (`.resumen`, `.panel-tabla`). Si el elemento no se ve (por ejemplo el menú en el celular), el paso se salta solo. Una pantalla nueva agrega su entrada en `GUIAS`; no hace falta tocar el componente.
+- **Glosario** (`views/glosario.js`). Es la única fuente de las definiciones: el «?» de las cifras (`Indicador` y `Resumen` con la prop `ayuda`) y la página Ayuda y glosario leen de ahí. Un término se define una sola vez, en lenguaje de todos los días.
+- **Primeros pasos** (`views/secciones/PrimerosPasos.jsx`). En el panel, la lista de lo que falta para empezar a cobrar; se marca sola con los datos y desaparece cuando todo está listo.
+- **Estados vacíos con acción**. Una tabla vacía explica para qué sirve y ofrece el botón que la llena: `SinDatos` con `titulo`, `texto` y `accion`.
+- **Siguiente paso después de guardar**. `useCrud` recibe `accionAlCrear(id)`, que devuelve `{ texto, href }`: el aviso de «se guardó» lleva ese enlace (por ejemplo «Ver e imprimir el recibo») y dura más tiempo.
+- **Lo recordado** (qué guía ya vio, si ocultó los primeros pasos) se guarda en el navegador con `views/recordar.js`, separado por usuario. Si el navegador no deja guardar, la ayuda vuelve a mostrarse; nunca falla la página.
+
+## Movimiento
+
+Sutil y con propósito: indica qué cambió o hacia dónde mirar, nunca decora.
+
+- Variables de `Site.css`: `--duracion-rapida` (140 ms, botones), `--duracion-normal` (220 ms, avisos, ventanas) y `--duracion-lenta` (380 ms, entrada de página), con la curva `--curva-llegada`.
+- Se animan solo `opacity` y `transform`. Sin rebotes ni efectos elásticos.
+- Las cifras del panel cuentan hasta su valor una vez (`CifraAnimada`); el lector de pantalla recibe el valor final.
+- Con «reducir movimiento» activado en el sistema operativo, todo aparece directamente: el CSS lleva las duraciones a 1 ms y el JavaScript consulta `prefiereMenosMovimiento()`.
+
+## Palabras
+
+- **Disponible** es siempre dinero (caja más banco). Un departamento sin residentes está **desocupado**, no disponible: igual paga su expensa.
+- La deuda pertenece al departamento, no a la persona: al traspasar, la pendiente pasa al nuevo propietario y así se explica en el sistema.
 
 ## Reglas
 
 - **Tablas**: deben entrar completas en 1280 px de ancho. La columna de acciones lleva la clase `columna-acciones` (queda fija a la derecha si la tabla se desplaza). Meses abreviados con `mesAbreviado()` cuando el espacio es justo.
 - **Tarjetas**: sin franjas de color en los bordes; el tono se marca con un punto junto a la etiqueta o con el ícono.
 - **Formularios**: etiqueta visible en cada campo, el error se muestra dentro del formulario y dice cómo resolverlo, el botón nombra la acción («Registrar pago», no «Aceptar»).
-- **Estados**: toda lista tiene estado vacío, de carga y de error.
+- **Estados**: toda lista tiene estado vacío (con su acción), de carga (silueta, no círculo que gira) y de error.
 - **Acciones que no se deshacen** (anular, eliminar, traspasar): piden confirmación y explican la consecuencia.
 - **Singular y plural**: `cantidad(1, 'cargo vencido', 'cargos vencidos')`.
 - **Íconos**: solo los de `views/components/Icono.jsx`; no emojis ni símbolos de texto.

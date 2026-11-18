@@ -1,6 +1,6 @@
 import useDatos from '../hooks/useDatos';
 import { parametro } from '../ruta';
-import { dinero, formatoFecha, capitalizar, mesLargo, montoEnLetras, textoAnulacion } from '../formato';
+import { dinero, formatoFecha, hoy, capitalizar, mesLargo, montoEnLetras, textoAnulacion } from '../formato';
 import Cargando from '../components/Cargando';
 import DocumentoComprobante, { DatosComprobante } from '../secciones/DocumentoComprobante';
 
@@ -65,7 +65,8 @@ export default function Comprobante() {
 
             {ingreso.estado === 'registrado' && ingreso.departamento && (
                 <p className="comprobante-pie">
-                    Saldo del departamento a la fecha: deuda {dinero(ingreso.deuda)} · a favor {dinero(ingreso.saldo_favor)}
+                    {/* Es el saldo de hoy, no el del día del pago: si el recibo se reimprime después, la fecha lo aclara */}
+                    Saldo del departamento al {formatoFecha(hoy())}: deuda {dinero(ingreso.deuda)} · a favor {dinero(ingreso.saldo_favor)}
                 </p>
             )}
         </DocumentoComprobante>

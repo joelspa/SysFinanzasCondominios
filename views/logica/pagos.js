@@ -1,10 +1,19 @@
 import { mesActual, desplazarMes } from '../formato';
+import { CONCEPTO_EXPENSAS } from '../opciones';
 
 // Reglas de pagos en el navegador, para mostrar ANTES de guardar cómo quedará la cuenta.
 // Siguen el mismo criterio que el servidor (services/aplicarPagos.js y services/expensas.js);
 // el resultado final siempre lo calcula el servidor.
 
 const centavos = (valor) => Math.round(Number(valor || 0) * 100);
+
+// Tipo de ingreso que se propone: el pago de un departamento suele ser su expensa; un ingreso sin
+// departamento (alquiler del salón a un tercero, intereses) nunca es una expensa.
+export function tipoSugerido(tipos, conDepartamento) {
+    let esExpensa = (t) => t.nombre === CONCEPTO_EXPENSAS;
+    let tipo = conDepartamento ? tipos.find(esExpensa) : tipos.find((t) => !esExpensa(t));
+    return (tipo || tipos[0] || { id_tipo_ingreso: '' }).id_tipo_ingreso;
+}
 
 // Períodos que se emitirán al adelantar meses: desde el mes actual o desde el mes siguiente
 // a la última expensa del departamento, el que sea mayor

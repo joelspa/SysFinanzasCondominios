@@ -50,7 +50,7 @@ export default function Departamentos() {
     }
 
     const activos = departamentos.filter((d) => d.estado === 'activo');
-    const disponibles = activos.filter((d) => ocupacion(d) === 'disponible');
+    const desocupados = activos.filter((d) => ocupacion(d) === 'desocupado');
     const conDeuda = departamentos.filter((d) => Number(d.deuda) > 0);
     const filtrados = departamentos.filter((d) => (filtroEstado === '' || d.estado === filtroEstado)
         && (filtroOcupacion === '' || ocupacion(d) === filtroOcupacion)
@@ -71,24 +71,15 @@ export default function Departamentos() {
                 </div>
             )}
 
-            {!crud.cargando && activos.length > 0 && disponibles.length === 0 && (
-                <div className="mb-3">
-                    <Nota tono="info" titulo="No hay departamentos disponibles">
-                        Los {activos.length} departamentos activos están ocupados.
-                    </Nota>
-                </div>
-            )}
-
             <Resumen items={[
                 { etiqueta: 'Departamentos activos', valor: activos.length, detalle: decimal(sumar(activos, 'metros_cuadrados')) + ' m² en total' },
                 {
-                    etiqueta: 'Disponibles', valor: disponibles.length,
-                    detalle: disponibles.length === 0 ? 'Todos ocupados' : (activos.length - disponibles.length) + ' ocupados',
-                    tono: disponibles.length > 0 ? 'bueno' : undefined
+                    etiqueta: 'Desocupados', valor: desocupados.length,
+                    detalle: desocupados.length === 0 ? 'Todos tienen residentes' : (activos.length - desocupados.length) + ' ocupados · igual pagan expensas'
                 },
                 { etiqueta: 'Expensas mensuales', valor: dinero(sumar(activos, 'cuota_mensual')) },
                 {
-                    etiqueta: 'Deuda total', valor: dinero(sumar(departamentos, 'deuda')),
+                    etiqueta: 'Deuda total', valor: dinero(sumar(departamentos, 'deuda')), ayuda: 'deudaTotal',
                     detalle: conDeuda.length + (conDeuda.length === 1 ? ' departamento con deuda' : ' departamentos con deuda'),
                     tono: conDeuda.length > 0 ? 'critico' : undefined
                 }
@@ -113,7 +104,10 @@ export default function Departamentos() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={departamentos.length > 0} />}
+                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={departamentos.length > 0}
+                        titulo="Todavía no hay departamentos"
+                        texto="Registre cada departamento con su tipo: el tipo define la cuota mensual que paga."
+                        accion={{ texto: 'Registrar el primer departamento', onClick: adicionar }} />}
                     {filtrados.map((departamento) => (
                         <tr key={departamento.id_departamento}>
                             <td>

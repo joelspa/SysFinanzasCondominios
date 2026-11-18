@@ -6,7 +6,7 @@ export const ESTADOS_REGISTRO = [
 ];
 
 export const OCUPACION = [
-    { valor: 'disponible', texto: 'Disponibles' },
+    { valor: 'desocupado', texto: 'Desocupados' },
     { valor: 'ocupado', texto: 'Ocupados' }
 ];
 

@@ -5,7 +5,6 @@ const tonos = {
     activo: 'bueno',
     registrado: 'bueno',
     pagado: 'bueno',
-    disponible: 'bueno',
     pendiente: 'aviso',
     parcial: 'info',
     ocupado: 'info',

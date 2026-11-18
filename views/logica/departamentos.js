@@ -1,14 +1,15 @@
-// Un departamento está disponible si está activo y no tiene residentes activos
-export function estaDisponible(departamento) {
+// Un departamento está desocupado si está activo y no tiene residentes activos.
+// Desocupado no es «libre de pagar»: su expensa se sigue emitiendo a nombre del propietario.
+export function estaDesocupado(departamento) {
     return departamento.estado === 'activo' && Number(departamento.residentes_activos) === 0;
 }
 
-// 'disponible' | 'ocupado' | null (inactivo)
+// 'desocupado' | 'ocupado' | null (inactivo)
 export function ocupacion(departamento) {
     if (departamento.estado !== 'activo') {
         return null;
     }
-    return estaDisponible(departamento) ? 'disponible' : 'ocupado';
+    return estaDesocupado(departamento) ? 'desocupado' : 'ocupado';
 }
 
 export function enlaceFicha(idDepartamento) {

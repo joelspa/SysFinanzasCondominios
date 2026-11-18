@@ -3,6 +3,7 @@ import useCrud from '../hooks/useCrud';
 import { parametro } from '../ruta';
 import { coincide, dinero, formatoFecha, capitalizar, hoy, mesActual, sumar, numeroRecibo, textoAnulacion } from '../formato';
 import { ESTADOS_MOVIMIENTO, METODOS_PAGO } from '../opciones';
+import { tipoSugerido } from '../logica/pagos';
 import Encabezado from '../components/Encabezado';
 import Alerta from '../components/Alerta';
 import Resumen from '../components/Resumen';
@@ -21,7 +22,8 @@ import AplicacionesPago from '../secciones/AplicacionesPago';
 export default function Ingresos() {
     const crud = useCrud({
         rutas: { obtener: '/api/ingreso/obtenerIngresos', guardar: '/api/ingreso/guardarIngreso' },
-        id: 'id_ingreso', nombre: 'El pago', inicial: { Ingresos: [], Departamentos: [], Tipos: [], Pendientes: [] }
+        id: 'id_ingreso', nombre: 'El pago', inicial: { Ingresos: [], Departamentos: [], Tipos: [], Pendientes: [] },
+        accionAlCrear: (id) => ({ texto: 'Ver e imprimir el recibo', href: '/ingreso/comprobante?id=' + id })
     });
     const [busqueda, setBusqueda] = useState('');
     const [filtroEstado, setFiltroEstado] = useState('');
@@ -38,7 +40,7 @@ export default function Ingresos() {
         let departamento = departamentos.find((d) => d.id_departamento == id);
         crud.abrirFormulario({
             id_ingreso: 0, id_departamento: id,
-            id_tipo_ingreso: tipos.length > 0 ? tipos[0].id_tipo_ingreso : '',
+            id_tipo_ingreso: tipoSugerido(tipos, id !== ''),
             concepto: id === '' ? '' : 'Pago de expensas', monto: '',
             fecha: hoy(), metodo_pago: 'efectivo', referencia: '', aplica_deuda: id !== '', meses_adelantados: 0,
             pagador: departamento ? departamento.propietario : '',
@@ -80,8 +82,8 @@ export default function Ingresos() {
             <Resumen items={[
                 { etiqueta: 'Recaudado este mes', valor: dinero(sumar(registrados.filter((i) => i.fecha.startsWith(mesActual())))) },
                 { etiqueta: 'Total recaudado', valor: dinero(sumar(registrados)), detalle: registrados.length + (registrados.length === 1 ? ' pago registrado' : ' pagos registrados') },
-                { etiqueta: 'Deuda pendiente', valor: dinero(sumar(pendientes, 'saldo')), tono: pendientes.length > 0 ? 'critico' : undefined },
-                { etiqueta: 'Saldos a favor', valor: dinero(sumar(departamentos, 'saldo_favor')), detalle: 'Pagos adelantados sin aplicar' }
+                { etiqueta: 'Deuda pendiente', valor: dinero(sumar(pendientes, 'saldo')), tono: pendientes.length > 0 ? 'critico' : undefined, ayuda: 'deudaTotal' },
+                { etiqueta: 'Saldos a favor', valor: dinero(sumar(departamentos, 'saldo_favor')), detalle: 'Pagos adelantados sin aplicar', ayuda: 'saldoFavor' }
             ]} />
 
             <PanelTabla mostrados={filtrados.length} total={ingresos.length} herramientas={<>
@@ -103,7 +105,10 @@ export default function Ingresos() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={ingresos.length > 0} />}
+                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={ingresos.length > 0}
+                        titulo="Todavía no se registró ningún pago"
+                        texto="Cada pago genera su recibo numerado y se aplica primero a la deuda más antigua del departamento."
+                        accion={{ texto: 'Registrar el primer pago', onClick: () => adicionar() }} />}
                     {filtrados.map((ingreso) => (
                         <tr key={ingreso.id_ingreso} className={ingreso.estado === 'anulado' ? 'anulado' : ''}>
                             <td className="text-nowrap">

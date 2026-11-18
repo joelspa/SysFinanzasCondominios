@@ -95,7 +95,7 @@ export default function Cargos() {
                 <a className="btn btn-light" href="/cargo/avisos">
                     <Icono nombre="imprimir" tamano={16} /> Avisos de cobranza
                 </a>
-                <button className="btn btn-outline-primary" onClick={() => setGenerando(true)}>
+                <button className="btn btn-outline-primary" data-guia="generar-expensas" onClick={() => setGenerando(true)}>
                     <Icono nombre="generar" tamano={16} /> Generar expensas
                 </button>
             </Encabezado>
@@ -104,8 +104,8 @@ export default function Cargos() {
             <Resumen items={[
                 { etiqueta: 'Total emitido', valor: dinero(sumar(cargos)), detalle: cargos.length + ' cargos' },
                 { etiqueta: 'Cobrado', valor: dinero(sumar(cargos, 'pagado')), tono: 'bueno' },
-                { etiqueta: 'Por cobrar', valor: dinero(sumar(porCobrar, 'saldo')), detalle: porCobrar.length + ' cargos sin vencer', tono: 'aviso' },
-                { etiqueta: 'En mora', valor: dinero(sumar(vencidos, 'saldo')), detalle: cantidad(vencidos.length, 'cargo vencido', 'cargos vencidos'), tono: vencidos.length > 0 ? 'critico' : undefined }
+                { etiqueta: 'Por cobrar', valor: dinero(sumar(porCobrar, 'saldo')), detalle: porCobrar.length + ' cargos sin vencer', tono: 'aviso', ayuda: 'porCobrar' },
+                { etiqueta: 'En mora', valor: dinero(sumar(vencidos, 'saldo')), detalle: cantidad(vencidos.length, 'cargo vencido', 'cargos vencidos'), tono: vencidos.length > 0 ? 'critico' : undefined, ayuda: 'mora' }
             ]} />
 
             <PanelTabla mostrados={filtrados.length} total={cargos.length} herramientas={<>
@@ -129,7 +129,10 @@ export default function Cargos() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtrados.length === 0 && <SinDatos columnas={9} cargando={crud.cargando} filtrado={cargos.length > 0} />}
+                    {filtrados.length === 0 && <SinDatos columnas={9} cargando={crud.cargando} filtrado={cargos.length > 0}
+                        titulo="Todavía no hay cobros emitidos"
+                        texto="Al empezar cada mes, genere las expensas: se crea un cobro para cada departamento con la cuota de su tipo."
+                        accion={{ texto: 'Generar expensas', onClick: () => setGenerando(true) }} />}
                     {filtrados.map((cargo) => (
                         <tr key={cargo.id_cargo}>
                             <td className="text-nowrap">{mesAbreviado(cargo.periodo)}</td>

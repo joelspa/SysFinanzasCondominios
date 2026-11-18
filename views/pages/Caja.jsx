@@ -67,14 +67,14 @@ export default function Caja() {
 
             <Resumen items={[
                 {
-                    etiqueta: 'Efectivo en caja', valor: dineroConSigno(saldos.efectivo), detalle: 'Cobros y gastos en efectivo',
+                    etiqueta: 'Efectivo en caja', valor: dineroConSigno(saldos.efectivo), detalle: 'Cobros y gastos en efectivo', ayuda: 'caja',
                     tono: Number(saldos.efectivo) < 0 ? 'critico' : undefined
                 },
                 {
-                    etiqueta: 'En el banco', valor: dineroConSigno(saldos.banco), detalle: 'Transferencias, QR y tarjeta',
+                    etiqueta: 'En el banco', valor: dineroConSigno(saldos.banco), detalle: 'Transferencias, QR y tarjeta', ayuda: 'banco',
                     tono: Number(saldos.banco) < 0 ? 'critico' : undefined
                 },
-                { etiqueta: 'Disponible en total', valor: dineroConSigno(saldos.saldo), detalle: 'Caja más banco' },
+                { etiqueta: 'Disponible en total', valor: dineroConSigno(saldos.saldo), detalle: 'Caja más banco', ayuda: 'disponible' },
                 { etiqueta: 'Depositado este mes', valor: dinero(depositadoMes), detalle: 'De la caja al banco' }
             ]} />
 
@@ -95,7 +95,10 @@ export default function Caja() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={movimientos.length > 0} />}
+                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={movimientos.length > 0}
+                        titulo="Todavía no hay depósitos ni retiros"
+                        texto="Cuando lleve el efectivo cobrado al banco, regístrelo aquí para que el saldo de la caja y el del banco coincidan con la realidad."
+                        accion={{ texto: 'Registrar un depósito', onClick: adicionar }} />}
                     {filtrados.map((movimiento) => (
                         <tr key={movimiento.id_movimiento_caja} className={movimiento.estado === 'anulado' ? 'anulado' : ''}>
                             <td className="text-nowrap">{formatoFecha(movimiento.fecha)}</td>

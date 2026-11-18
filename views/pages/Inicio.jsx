@@ -4,9 +4,11 @@ import Estado from '../components/Estado';
 import Indicador from '../components/Indicador';
 import Cargando from '../components/Cargando';
 import Nota from '../components/Nota';
+import CifraAnimada from '../components/CifraAnimada';
+import PrimerosPasos from '../secciones/PrimerosPasos';
 import { GraficoColumnas, BarraEstados, BarrasHorizontales } from '../components/Graficos';
 import { dinero, dineroConSigno, formatoFecha, hoy, mesActual, desplazarMes, mesCorto, mesLargo, capitalizar, sumar, cantidad } from '../formato';
-import { estaDisponible, enlaceFicha } from '../logica/departamentos';
+import { estaDesocupado, enlaceFicha } from '../logica/departamentos';
 import { CONCEPTO_EXPENSAS } from '../opciones';
 
 const SERIES = [
@@ -22,17 +24,15 @@ function saludo() {
     return hora < 19 ? 'Buenas tardes' : 'Buenas noches';
 }
 
-// Cifra y detalle del indicador de disponibilidad (un condominio recién creado todavía no tiene departamentos)
-function textoDisponibilidad(activos, disponibles, ocupacion) {
+// Cifra y detalle del indicador de ocupación (un condominio recién creado todavía no tiene departamentos)
+function textoOcupacion(activos, desocupados, ocupacion) {
     if (activos === 0) {
         return { valor: '—', detalle: 'Todavía no hay departamentos registrados' };
     }
-    if (disponibles === 0) {
-        return { valor: 'Sin disponibles', detalle: 'Todos los departamentos están ocupados' };
-    }
     return {
-        valor: cantidad(disponibles, 'disponible', 'disponibles'),
-        detalle: (activos - disponibles) + ' de ' + activos + ' ocupados (' + ocupacion.toFixed(0) + '%)'
+        valor: ocupacion.toFixed(0) + '%',
+        detalle: (activos - desocupados) + ' de ' + activos + ' con residentes'
+            + (desocupados > 0 ? ' · ' + cantidad(desocupados, 'desocupado', 'desocupados') : '')
     };
 }
 
@@ -101,11 +101,11 @@ export default function Inicio({ usuario }) {
     const departamentosEnMora = new Set(vencidos.map((c) => c.id_departamento));
     const deudaTotal = sumar(porCobrar, 'saldo') + sumar(vencidos, 'saldo');
 
-    // Disponibilidad
+    // Ocupación
     const activos = listaDepartamentos.filter((d) => d.estado === 'activo');
-    const disponibles = activos.filter(estaDisponible);
-    const ocupacion = activos.length > 0 ? (activos.length - disponibles.length) / activos.length * 100 : 0;
-    const disponibilidad = textoDisponibilidad(activos.length, disponibles.length, ocupacion);
+    const desocupados = activos.filter(estaDesocupado);
+    const ocupacion = activos.length > 0 ? (activos.length - desocupados.length) / activos.length * 100 : 0;
+    const textoOcupado = textoOcupacion(activos.length, desocupados.length, ocupacion);
 
     // Departamentos activos que todavía no tienen la expensa de este mes (falta emitirla)
     const conExpensa = new Set(listaCargos.filter((c) => c.concepto === CONCEPTO_EXPENSAS && c.periodo === esteMes)
@@ -129,17 +129,11 @@ export default function Inicio({ usuario }) {
                 </div>
             </div>
 
-            {listaDepartamentos.length === 0 && (
-                <div className="mb-3">
-                    <Nota tono="info" titulo="Este condominio todavía no tiene departamentos">
-                        Para empezar: revise los <a href="/configuracion#tipoDepartamento">tipos de departamento</a> y sus cuotas,
-                        registre los <a href="/departamento">departamentos</a> y asigne a sus <a href="/residente">propietarios</a>.
-                        Después podrá generar las expensas de cada mes.
-                    </Nota>
-                </div>
-            )}
+            <PrimerosPasos usuario={usuario} tipos={departamentos.datos.Tipos} departamentos={listaDepartamentos}
+                cargos={listaCargos} ingresos={ingresos.datos.Ingresos} />
 
-            {sinExpensa > 0 && (
+            {/* Si todavía no hay ningún cargo, esto ya lo indica «Primeros pasos» */}
+            {sinExpensa > 0 && listaCargos.length > 0 && (
                 <div className="mb-3">
                     <Nota tono="aviso" titulo={'Falta emitir las expensas de ' + mesLargo(esteMes)}>
                         {cantidad(sinExpensa, 'departamento activo todavía no tiene', 'departamentos activos todavía no tienen')} su
@@ -153,17 +147,18 @@ export default function Inicio({ usuario }) {
                 </div>
             )}
 
-            <div className="row g-3 mb-4">
+            <div className="row g-3 mb-4 indicadores" data-guia="indicadores">
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Disponible" valor={dineroConSigno(saldoCaja)} icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}>
+                    <Indicador etiqueta="Disponible" ayuda="disponible" icono="caja" tono={saldoCaja < 0 ? 'critico' : ''}
+                        valor={<CifraAnimada valor={saldoCaja} formato={dineroConSigno} />}>
                         <a className="indicador-detalle enlace" href="/caja">
                             Caja {dineroConSigno(caja.efectivo)} · Banco {dineroConSigno(caja.banco)}
                         </a>
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Resultado del mes" icono="balanza" tono={resultadoMes < 0 ? 'critico' : ''}
-                        valor={<span className={resultadoMes < 0 ? 'baja' : ''}>{dineroConSigno(resultadoMes)}</span>}>
+                    <Indicador etiqueta="Resultado del mes" ayuda="resultadoMes" icono="balanza" tono={resultadoMes < 0 ? 'critico' : ''}
+                        valor={<span className={resultadoMes < 0 ? 'baja' : ''}><CifraAnimada valor={resultadoMes} formato={dineroConSigno} /></span>}>
                         <span className="indicador-detalle">
                             <b className={resultadoMes >= 0 ? 'sube' : 'baja'}>{resultadoMes >= 0 ? 'Ganancia' : 'Pérdida'}</b>
                             {' '}en {mesLargo(esteMes)} · cobrado {dinero(sumar(delMes(pagos, esteMes)))}
@@ -171,7 +166,8 @@ export default function Inicio({ usuario }) {
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Por cobrar" valor={dinero(deudaTotal)} icono="reloj" tono="aviso">
+                    <Indicador etiqueta="Total por cobrar" ayuda="deudaTotal" icono="reloj" tono="aviso"
+                        valor={<CifraAnimada valor={deudaTotal} formato={dinero} />}>
                         <span className="indicador-detalle">
                             {departamentosEnMora.size === 0 ? 'Ningún departamento en mora'
                                 : <><b className="baja">{dinero(sumar(vencidos, 'saldo'))} en mora</b> · {departamentosEnMora.size} {departamentosEnMora.size === 1 ? 'departamento' : 'departamentos'}</>}
@@ -179,8 +175,8 @@ export default function Inicio({ usuario }) {
                     </Indicador>
                 </div>
                 <div className="col-sm-6 col-xl-3">
-                    <Indicador etiqueta="Disponibilidad" icono="departamentos" valor={disponibilidad.valor}>
-                        <span className="indicador-detalle">{disponibilidad.detalle}</span>
+                    <Indicador etiqueta="Ocupación" icono="departamentos" valor={textoOcupado.valor}>
+                        <span className="indicador-detalle">{textoOcupado.detalle}</span>
                         <div className="medidor"><span style={{ width: ocupacion + '%' }}></span></div>
                     </Indicador>
                 </div>

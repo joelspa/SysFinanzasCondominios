@@ -12,7 +12,7 @@ export default function Encabezado({ titulo, descripcion, textoBoton = 'Adiciona
             <div className="encabezado-acciones">
                 {children}
                 {onAdicionar && (
-                    <button className="btn btn-primary" onClick={onAdicionar}>
+                    <button className="btn btn-primary" data-guia="accion-principal" onClick={onAdicionar}>
                         <Icono nombre="mas" tamano={16} /> {textoBoton}
                     </button>
                 )}

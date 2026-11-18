@@ -58,6 +58,7 @@ export default function Login() {
                             </button>
                         </div>
                     </div>
+                    <p className="ingreso-pista">¿Olvidó su contraseña? Pídale al administrador que le asigne una nueva desde Usuarios.</p>
                 </form>
             </main>
         </div>

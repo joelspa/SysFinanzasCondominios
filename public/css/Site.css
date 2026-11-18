@@ -44,11 +44,17 @@ body {
     outline-offset: 2px;
 }
 
-/* Quien pide menos movimiento en su sistema no ve animaciones */
+/* Quien pide menos movimiento en su sistema ve los cambios al instante: sin desplazamientos, brillos ni esperas
+   (las cifras del panel y la guía también lo respetan desde JavaScript, ver views/recordar.js) */
 @media (prefers-reduced-motion: reduce) {
-    * {
-        animation: none !important;
-        transition: none !important;
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -1087,7 +1093,7 @@ li.anulado {
     border-radius: 0.75rem;
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
     font-size: 0.9rem;
-    animation: aparecer 0.2s ease;
+    animation: aviso-entra var(--duracion-lenta) var(--curva-llegada);
 }
 
 .aviso-flotante .boton-icono {
@@ -1112,10 +1118,11 @@ li.anulado {
 /* ===== Ventana modal ===== */
 .modal-backdrop.show {
     opacity: 0.45;
+    animation: aparecer-suave var(--duracion-normal) ease-out;
 }
 
 .modal-dialog {
-    animation: aparecer 0.2s ease;
+    animation: ventana-entra var(--duracion-normal) var(--curva-llegada);
 }
 
 .modal-content {
@@ -1163,17 +1170,6 @@ li.anulado {
     font-size: 0.875rem;
 }
 
-@keyframes aparecer {
-    from {
-        opacity: 0;
-        transform: translateY(-6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
 
 @media (max-width: 575.98px) {
     .tabla-herramientas .form-select {
@@ -2249,5 +2245,669 @@ a.enlace-etiqueta:hover {
 
     .aviso-cobranza:last-child {
         break-after: auto;
+    }
+}
+
+/* ===== Movimiento: duraciones y curvas compartidas =====
+   Rápido para la respuesta a un clic, normal para un cambio de estado, lento para algo que llega a la pantalla.
+   Todo frena con suavidad al llegar; nada rebota. */
+:root {
+    --curva-llegada: cubic-bezier(0.16, 1, 0.3, 1);
+    --duracion-rapida: 140ms;
+    --duracion-normal: 220ms;
+    --duracion-lenta: 380ms;
+}
+
+@keyframes entrar {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+@keyframes aparecer-suave {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes ventana-entra {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+}
+
+@keyframes aviso-entra {
+    from {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+}
+
+@keyframes llenar {
+    from {
+        transform: scaleX(0);
+    }
+}
+
+@keyframes marcar {
+    from {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+}
+
+@keyframes brillo {
+    from {
+        background-position: 150% 0;
+    }
+
+    to {
+        background-position: -50% 0;
+    }
+}
+
+/* La página aparece de una vez (solo opacidad: un desplazamiento movería también las ventanas que abre) */
+.app-principal {
+    animation: aparecer-suave var(--duracion-normal) ease-out both;
+}
+
+/* Las cuatro cifras del panel llegan una tras otra */
+.indicadores > div {
+    animation: entrar var(--duracion-lenta) var(--curva-llegada) both;
+}
+
+.indicadores > div:nth-child(2) {
+    animation-delay: 50ms;
+}
+
+.indicadores > div:nth-child(3) {
+    animation-delay: 100ms;
+}
+
+.indicadores > div:nth-child(4) {
+    animation-delay: 150ms;
+}
+
+/* Las barras se llenan hasta su valor y, si el valor cambia, se deslizan al nuevo */
+.progreso span,
+.medidor span,
+.bh-pista span {
+    transform-origin: left center;
+    animation: llenar 700ms var(--curva-llegada) both;
+    transition: width var(--duracion-lenta) var(--curva-llegada);
+}
+
+.aviso-icono {
+    animation: marcar var(--duracion-lenta) 100ms var(--curva-llegada) both;
+}
+
+/* Respuesta al clic: el botón se hunde apenas */
+.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.menu-enlace,
+.boton-icono,
+.boton-menu {
+    transition: background-color var(--duracion-rapida) ease-out, color var(--duracion-rapida) ease-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* ===== Silueta de carga ===== */
+.esqueleto {
+    background: linear-gradient(90deg, #eceff4 0%, #f7f8fa 40%, #eceff4 80%);
+    background-size: 200% 100%;
+    border-radius: 0.75rem;
+    animation: brillo 1.4s linear infinite;
+}
+
+.esqueleto-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.esqueleto-tarjeta {
+    height: 104px;
+}
+
+.esqueleto-panel {
+    height: 340px;
+    border-radius: 0.875rem;
+}
+
+.tabla td.fila-esqueleto {
+    padding-top: 1.05rem;
+    padding-bottom: 1.05rem;
+}
+
+.esqueleto-linea {
+    height: 14px;
+    border-radius: 6px;
+}
+
+/* ===== Ayuda «?» junto a un término ===== */
+.ayuda {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+}
+
+.ayuda-boton {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--texto-3);
+    cursor: help;
+    transition: color var(--duracion-rapida) ease-out, background-color var(--duracion-rapida) ease-out;
+}
+
+/* Zona de toque más grande que el ícono, para el dedo en el celular */
+.ayuda-boton::after {
+    content: "";
+    position: absolute;
+    inset: -10px;
+}
+
+.ayuda-boton:hover,
+.ayuda-boton[aria-expanded="true"] {
+    color: var(--brand);
+    background: var(--brand-suave);
+}
+
+.ayuda-globo {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    z-index: 1060;
+    width: 260px;
+    padding: 0.7rem 0.85rem;
+    transform: translateX(-50%);
+    background: var(--menu);
+    color: #dbe2ec;
+    border-radius: 0.6rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
+    white-space: normal;
+    animation: globo-entra var(--duracion-normal) var(--curva-llegada);
+}
+
+.ayuda-globo strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+@keyframes globo-entra {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 4px);
+    }
+}
+
+/* En el celular la explicación aparece abajo, de lado a lado, para no salirse de la pantalla */
+@media (max-width: 575.98px) {
+    .ayuda-globo {
+        position: fixed;
+        top: auto;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        width: auto;
+        transform: none;
+        animation: entrar var(--duracion-normal) var(--curva-llegada);
+    }
+}
+
+/* ===== Recorrido guiado ===== */
+.recorrido-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(15, 23, 42, 0.55);
+    pointer-events: none;
+    animation: aparecer-suave var(--duracion-normal) ease-out;
+}
+
+/* El resaltado: un hueco en la sombra que oscurece la página. Se desliza de un paso al siguiente. */
+.recorrido-foco {
+    position: fixed;
+    z-index: 1100;
+    border-radius: 12px;
+    box-shadow: 0 0 0 2px var(--serie), 0 0 0 9999px rgba(15, 23, 42, 0.55);
+    pointer-events: none;
+    transition: top var(--duracion-lenta) var(--curva-llegada), left var(--duracion-lenta) var(--curva-llegada),
+        width var(--duracion-lenta) var(--curva-llegada), height var(--duracion-lenta) var(--curva-llegada);
+    animation: aparecer-suave var(--duracion-normal) ease-out;
+}
+
+.recorrido-tarjeta {
+    position: fixed;
+    z-index: 1101;
+    padding: 1.1rem 1.15rem 1rem;
+    background: var(--superficie);
+    border-radius: 0.875rem;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28);
+    outline: none;
+    transition: top var(--duracion-lenta) var(--curva-llegada), left var(--duracion-lenta) var(--curva-llegada);
+}
+
+.recorrido-tarjeta:focus-visible {
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28), 0 0 0 3px var(--serie);
+}
+
+.recorrido-contenido {
+    animation: entrar var(--duracion-normal) var(--curva-llegada);
+}
+
+.recorrido-progreso {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--texto-3);
+}
+
+.recorrido-puntos {
+    display: flex;
+    gap: 4px;
+}
+
+.recorrido-puntos span {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--borde);
+    transition: width var(--duracion-normal) var(--curva-llegada), background-color var(--duracion-normal) ease-out;
+}
+
+.recorrido-puntos span.visto {
+    background: var(--serie-suave);
+}
+
+.recorrido-puntos span.actual {
+    width: 18px;
+    background: var(--brand);
+}
+
+.recorrido-tarjeta h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 650;
+}
+
+.recorrido-tarjeta p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--texto-2);
+}
+
+.recorrido-acciones {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.recorrido-saltar {
+    margin-right: auto;
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: var(--texto-3);
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.recorrido-saltar:hover {
+    color: var(--texto);
+}
+
+/* Botón de la barra superior que abre la guía de la pantalla */
+.boton-guia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: var(--superficie);
+    color: var(--texto-2);
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color var(--duracion-rapida) ease-out, color var(--duracion-rapida) ease-out,
+        border-color var(--duracion-rapida) ease-out;
+}
+
+.boton-guia:hover {
+    border-color: #b9cdf0;
+    background: var(--brand-suave);
+    color: var(--brand);
+}
+
+@media (max-width: 767.98px) {
+    .boton-guia {
+        padding: 0.45rem;
+    }
+
+    .boton-guia span {
+        display: none;
+    }
+}
+
+/* ===== Aviso con un enlace para seguir (ej. ver el recibo recién registrado) ===== */
+.aviso-accion {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    margin-top: 0.35rem;
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.aviso-accion:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ===== Primeros pasos (panel principal) ===== */
+.primeros-pasos {
+    border-color: #b9cdf0;
+}
+
+.primeros-pasos-avance {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--texto-2);
+}
+
+.primeros-pasos-avance .progreso {
+    flex: 1;
+    max-width: 320px;
+    margin: 0;
+}
+
+.primeros-pasos-lista {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.primeros-pasos-lista li {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.6rem;
+}
+
+.primeros-pasos-lista li.siguiente {
+    background: var(--brand-suave);
+}
+
+.primeros-pasos-lista li.hecho {
+    color: var(--texto-3);
+}
+
+.primeros-pasos-marca {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 1.5px solid var(--borde);
+    border-radius: 50%;
+    background: var(--superficie);
+    color: var(--texto-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.primeros-pasos-lista li.siguiente .primeros-pasos-marca {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+
+.primeros-pasos-lista li.hecho .primeros-pasos-marca {
+    border-color: var(--bueno);
+    background: var(--bueno);
+    color: #fff;
+    animation: marcar var(--duracion-lenta) var(--curva-llegada) both;
+}
+
+/* ===== Centro de ayuda ===== */
+.centro-ayuda {
+    max-width: 1000px;
+}
+
+.ayuda-indice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.ayuda-indice a {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: var(--superficie);
+    color: var(--texto-2);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--duracion-rapida) ease-out, color var(--duracion-rapida) ease-out,
+        border-color var(--duracion-rapida) ease-out;
+}
+
+.ayuda-indice a:hover {
+    border-color: #b9cdf0;
+    background: var(--brand-suave);
+    color: var(--brand);
+}
+
+.ayuda-seccion {
+    margin-bottom: 2.25rem;
+    scroll-margin-top: 84px;
+}
+
+.ayuda-seccion > h2 {
+    margin-bottom: 0.9rem;
+    font-size: 1.2rem;
+    font-weight: 650;
+}
+
+.ayuda-etapas {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.ayuda-etapa h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.ayuda-pasos {
+    margin: 0;
+    padding: 0.35rem 1.25rem 0.75rem;
+    list-style: none;
+}
+
+.ayuda-pasos li {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.ayuda-pasos li:last-child {
+    border-bottom: 0;
+}
+
+.ayuda-numero {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--brand-suave);
+    color: var(--brand-oscuro);
+    font-size: 0.8rem;
+    font-weight: 650;
+}
+
+.ayuda-enlaces {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.4rem;
+}
+
+@media (max-width: 575.98px) {
+    .ayuda-pasos li {
+        flex-wrap: wrap;
+    }
+
+    .ayuda-enlaces {
+        width: 100%;
+        padding-left: calc(28px + 0.9rem);
+    }
+}
+
+.ayuda-preguntas details {
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.ayuda-preguntas details:last-child {
+    border-bottom: 0;
+}
+
+.ayuda-preguntas summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    font-weight: 550;
+    list-style: none;
+    cursor: pointer;
+    transition: background-color var(--duracion-rapida) ease-out;
+}
+
+.ayuda-preguntas summary::-webkit-details-marker {
+    display: none;
+}
+
+.ayuda-preguntas summary:hover {
+    background: var(--superficie-2);
+}
+
+.ayuda-flecha {
+    flex-shrink: 0;
+    color: var(--texto-3);
+    transform: rotate(90deg);
+    transition: transform var(--duracion-normal) var(--curva-llegada);
+}
+
+.ayuda-preguntas details[open] .ayuda-flecha {
+    transform: rotate(-90deg);
+}
+
+.ayuda-preguntas details p {
+    max-width: 72ch;
+    margin: 0;
+    padding: 0 1.25rem 1.1rem;
+    line-height: 1.6;
+    color: var(--texto-2);
+    animation: entrar var(--duracion-normal) var(--curva-llegada);
+}
+
+.ayuda-glosario {
+    margin: 0;
+    padding: 0.4rem 1.25rem;
+}
+
+.ayuda-glosario > div {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.ayuda-glosario > div:last-child {
+    border-bottom: 0;
+}
+
+.ayuda-glosario dt {
+    font-weight: 650;
+}
+
+.ayuda-glosario dd {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--texto-2);
+}
+
+@media (max-width: 575.98px) {
+    .ayuda-glosario > div {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+}
+
+/* ===== Ingreso ===== */
+.ingreso-formulario {
+    animation: entrar var(--duracion-lenta) var(--curva-llegada) both;
+}
+
+.ingreso-pista {
+    margin: 1.25rem 0 0;
+    font-size: 0.82rem;
+    color: var(--texto-3);
+    text-align: center;
+}
+
+/* Las ayudas en pantalla no van al papel */
+@media print {
+    .recorrido,
+    .boton-guia,
+    .ayuda {
+        display: none !important;
     }
 }

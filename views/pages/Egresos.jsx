@@ -22,6 +22,7 @@ export default function Egresos() {
     const crud = useCrud({
         rutas: { obtener: '/api/egreso/obtenerEgresos', guardar: '/api/egreso/guardarEgreso' },
         id: 'id_egreso', nombre: 'El gasto',
+        accionAlCrear: (id) => ({ texto: 'Ver el comprobante', href: '/egreso/comprobante?id=' + id }),
         inicial: { Egresos: [], Tipos: [], Caja: { ingresos: 0, egresos: 0, ingresos_mes: 0, egresos_mes: 0, saldo: 0 } }
     });
     const [busqueda, setBusqueda] = useState('');
@@ -75,7 +76,7 @@ export default function Egresos() {
 
             <Resumen items={[
                 {
-                    etiqueta: 'Disponible', valor: dineroConSigno(saldo),
+                    etiqueta: 'Disponible', valor: dineroConSigno(saldo), ayuda: 'disponible',
                     detalle: 'Caja ' + dineroConSigno(caja.efectivo) + ' · Banco ' + dineroConSigno(caja.banco),
                     tono: saldo < 0 ? 'critico' : 'bueno'
                 },
@@ -107,7 +108,10 @@ export default function Egresos() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={egresos.length > 0} />}
+                    {filtrados.length === 0 && <SinDatos columnas={7} cargando={crud.cargando} filtrado={egresos.length > 0}
+                        titulo="Todavía no se registró ningún gasto"
+                        texto="Registre cada pago del condominio a un proveedor o empleado, con su factura o recibo como respaldo."
+                        accion={{ texto: 'Registrar el primer gasto', onClick: adicionar }} />}
                     {filtrados.map((egreso) => (
                         <tr key={egreso.id_egreso} className={egreso.estado === 'anulado' ? 'anulado' : ''}>
                             <td className="text-nowrap">

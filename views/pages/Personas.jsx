@@ -57,7 +57,10 @@ export default function Personas() {
                     </tr>
                 </thead>
                 <tbody>
-                    {filtradas.length === 0 && <SinDatos columnas={5} cargando={crud.cargando} filtrado={personas.length > 0} />}
+                    {filtradas.length === 0 && <SinDatos columnas={5} cargando={crud.cargando} filtrado={personas.length > 0}
+                        titulo="Todavía no hay personas registradas"
+                        texto="Registre a los propietarios e inquilinos con su CI o NIT; después se asignan a su departamento en Residentes."
+                        accion={{ texto: 'Registrar una persona', onClick: () => crud.abrirFormulario(personaNueva) }} />}
                     {filtradas.map((persona) => (
                         <tr key={persona.id_persona}>
                             <td>

@@ -2,7 +2,9 @@ import { createRoot } from 'react-dom/client';
 import { obtener } from './api';
 import { RUTAS_ADMIN } from './opciones';
 import Menu from './components/Menu';
+import Guia from './components/Guia';
 import Login from './pages/Login';
+import CentroAyuda from './pages/CentroAyuda';
 import Inicio from './pages/Inicio';
 import Condominios from './pages/Condominios';
 import Personas from './pages/Personas';
@@ -24,6 +26,7 @@ import Usuarios from './pages/Usuarios';
 const paginas = {
     '/': Inicio,
     '/condominio': Condominios,
+    '/ayuda': CentroAyuda,
     '/persona': Personas,
     '/departamento': Departamentos,
     '/departamento/ficha': FichaDepartamento,
@@ -59,14 +62,17 @@ async function iniciar() {
     // usuario: { nombre, correo, rol, condominios: los que puede usar, id_condominio: en el que está trabajando }
     let usuario = sesion.Data;
     let permitida = usuario.rol === 'admin' || !RUTAS_ADMIN.includes(ruta);
-    let Pagina = (permitida && paginas[ruta]) || Inicio;
+    // Una dirección desconocida o sin permiso muestra el panel principal (y su menú y su guía)
+    let mostrada = permitida && paginas[ruta] ? ruta : '/';
+    let Pagina = paginas[mostrada];
 
     raiz.render(
         <div className="app">
-            <Menu ruta={ruta} usuario={usuario} />
+            <Menu ruta={mostrada} usuario={usuario} />
             <main className="app-principal">
                 <Pagina usuario={usuario} />
             </main>
+            <Guia ruta={mostrada} usuario={usuario} />
         </div>
     );
 }

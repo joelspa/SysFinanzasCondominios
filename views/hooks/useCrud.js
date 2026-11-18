@@ -8,15 +8,17 @@ import useDatos from './useDatos';
 //   id:      campo clave del registro (ej. 'id_persona')
 //   nombre:  cómo se nombra el registro en los avisos (ej. 'La persona')
 //   inicial: valor de "datos" mientras no responde la API (con la misma forma que su Data)
-export default function useCrud({ rutas, id, nombre, inicial }) {
+//   accionAlCrear(id): enlace que se ofrece en el aviso después de crear un registro (opcional),
+//                      ej. { texto: 'Ver el recibo', href: '/ingreso/comprobante?id=' + id }
+export default function useCrud({ rutas, id, nombre, inicial, accionAlCrear }) {
     const lista = useDatos(rutas.obtener, inicial);
     const [formulario, setFormulario] = useState(null);   // registro que se está editando (null = modal cerrado)
     const [aEliminar, setAEliminar] = useState(null);     // registro que se va a eliminar (null = sin confirmar)
     const [error, setError] = useState('');               // error que se muestra dentro del formulario
-    const [mensaje, setMensaje] = useState(null);         // aviso flotante { tipo, texto }
+    const [mensaje, setMensaje] = useState(null);         // aviso flotante { tipo, texto, accion }
 
-    function avisar(tipo, texto) {
-        setMensaje({ tipo, texto });
+    function avisar(tipo, texto, accion = null) {
+        setMensaje({ tipo, texto, accion });
     }
 
     useEffect(() => {
@@ -42,8 +44,9 @@ export default function useCrud({ rutas, id, nombre, inicial }) {
     async function guardar() {
         let resultado = await enviar(rutas.guardar, formulario);
         if (resultado.Success) {
+            let creado = formulario[id] == 0;
             setFormulario(null);
-            avisar('success', nombre + ' se guardó correctamente');
+            avisar('success', nombre + ' se guardó correctamente', creado && accionAlCrear ? accionAlCrear(resultado.Data) : null);
             lista.recargar();
         } else {
             setError(resultado.Mensaje);

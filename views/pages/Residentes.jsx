@@ -97,7 +97,7 @@ export default function Residentes() {
             <Encabezado titulo="Residentes"
                 descripcion="Propietarios, inquilinos y familiares de cada departamento, con el historial de traspasos."
                 textoBoton="Asignar residente" onAdicionar={adicionar}>
-                <button className="btn btn-outline-primary" onClick={() => setTraspasando(true)} disabled={historial.cargando}>
+                <button className="btn btn-outline-primary" data-guia="traspaso" onClick={() => setTraspasando(true)} disabled={historial.cargando}>
                     <Icono nombre="traspaso" tamano={16} /> Traspaso de propiedad
                 </button>
             </Encabezado>
@@ -134,7 +134,10 @@ export default function Residentes() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filtrados.length === 0 && <SinDatos columnas={6} cargando={crud.cargando} filtrado={residentes.length > 0} />}
+                        {filtrados.length === 0 && <SinDatos columnas={6} cargando={crud.cargando} filtrado={residentes.length > 0}
+                            titulo="Todavía no hay residentes"
+                            texto="Asigne a cada departamento su propietario y, si los hay, inquilinos o familiares."
+                            accion={{ texto: 'Asignar el primer residente', onClick: adicionar }} />}
                         {filtrados.map((residente) => (
                             <tr key={residente.id_residente}>
                                 <td>

@@ -6,7 +6,7 @@ import Icono from '../components/Icono';
 import VistaPreviaPago from './VistaPreviaPago';
 import { METODOS_PAGO, MAX_MESES_ADELANTO, CONCEPTO_EXPENSAS } from '../opciones';
 import { dinero, sumar, hoy } from '../formato';
-import { periodosAdelantados, simularPago } from '../logica/pagos';
+import { periodosAdelantados, simularPago, tipoSugerido } from '../logica/pagos';
 
 // Campos del pago (izquierda) y cuenta del departamento con la vista previa (derecha)
 //   pendientes: cargos con saldo de todos los departamentos
@@ -37,14 +37,21 @@ export default function FormularioPago({ formulario, cambiar, actualizar, depart
     // Sin departamento es un ingreso del condominio: no paga deudas. Al volver a elegir un
     // departamento se vuelve a proponer aplicarlo a su deuda.
     // Como quien paga se propone al propietario del departamento elegido (se puede cambiar: a veces paga el inquilino).
+    // Al pasar de un departamento a «Sin departamento» (o al revés) también cambian el tipo y el concepto
+    // propuestos: un ingreso del condominio no es una expensa.
     function elegirDepartamento(valor) {
         let veniaSinDepartamento = formulario.id_departamento === '';
+        let cambiaDeClase = (valor === '') !== veniaSinDepartamento;
         let elegido = departamentos.find((d) => d.id_departamento == valor);
         actualizar({
             id_departamento: valor, meses_adelantados: 0,
             aplica_deuda: valor === '' ? false : (veniaSinDepartamento || aplica),
             pagador: elegido ? (elegido.propietario || '') : '',
-            pagador_documento: elegido ? (elegido.documento_propietario || '') : ''
+            pagador_documento: elegido ? (elegido.documento_propietario || '') : '',
+            ...(cambiaDeClase ? {
+                id_tipo_ingreso: tipoSugerido(tipos, valor !== ''),
+                concepto: valor === '' ? '' : 'Pago de expensas'
+            } : {})
         });
     }
 
