@@ -288,7 +288,9 @@ INSERT INTO residente (id_departamento, id_persona, tipo_relacion, fecha_inicio)
     (2, 2, 'propietario', '2024-06-01'),
     (2, 3, 'inquilino', '2026-03-01');
 
--- Administrador inicial. Todavía no puede ingresar: asígnele una contraseña con
+-- Administrador inicial. Todavía no puede ingresar: después de crear la base ejecute
+--   npm run demo      (usuarios de prueba del README, con contraseñas conocidas)
+-- o asígnele su propia contraseña con
 --   npm run admin -- admin@condominio.com SuContraseña
 INSERT INTO usuario (nombre, correo, password_hash, rol) VALUES
     ('Administrador', 'admin@condominio.com', 'pendiente-login', 'admin');

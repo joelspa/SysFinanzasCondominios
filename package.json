@@ -10,7 +10,8 @@
     "start": "npm run build && node index.js",
     "dev": "node scripts/dev.js",
     "migrar": "node scripts/migrar.js",
-    "admin": "node scripts/crearAdmin.js"
+    "admin": "node scripts/crearAdmin.js",
+    "demo": "node scripts/usuariosDemo.js"
   },
   "dependencies": {
     "connect-pg-simple": "^10.0.0",
